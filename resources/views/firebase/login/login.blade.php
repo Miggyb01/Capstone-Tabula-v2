@@ -19,7 +19,7 @@
 		min-height: 100vh;
 		padding: 0 10px;
 		display: flex;
-		background: #007bff;
+		background: #F5F5F5;
 		justify-content: center;
 		align-items: center;
 	}
@@ -79,8 +79,8 @@
 	form .input_box input {
 		width: 100%;
 		height: 57px;
-		border: 1px solid #2a9df4;
-		border-radius: 5px;
+		border: 1px solid #3155FE;
+		border-radius: 15px;
 		outline: none;
 		background: #F9F6EE;
 		font-size: 17px;
@@ -90,7 +90,7 @@
 	}
 
 	form .input_box input:focus {
-		border-color: #2a9df4;
+		border-color: #3155FE;
 	}
 
 	form .input_box .password_title {
@@ -105,7 +105,7 @@
 
 	a {
 		text-decoration: none;
-		color: #2a9df4;
+		color: #3155FE;
 		font-weight: 500;
 	}
 
@@ -117,10 +117,10 @@
 	form .button input {
 		width: 100%;
 		height: 56px;
-		border-radius: 5px;
+		border-radius: 15px;
 		border: none;
 		outline: none;
-		background: #007bff;
+		background: #3155FE;
 		color: #fff;
 		font-size: 18px;
 		font-weight: 500;
@@ -169,27 +169,25 @@
 
 			<!-- Email input box -->
 			<div class="input_box">
-			<label for="email">Email</label>
-			<input type="email" name="email" id="email" placeholder="Enter email address" required />
+			<input type="email" name="email" id="email" placeholder="Enter email address / Username" required />
 			</div>
 
 			<!-- Paswwrod input box -->
 			<div class="input_box">
 			<div class="password_title">
-			<label for="password">Password</label>
-			<a href="#">Forgot Password?</a>
 			</div>
-
+			
 			<input type="password" name="password" id="password" placeholder="Enter your password" required />
 			</div>
-			  
+
+			<div class="button">
+			<input type="submit" value="Next">
+			<a href="#" class="float-end">Forgot Password?</a>
+			</div>			  
 			<!-- Login option separator -->
-			<p class="separator">
-			<span>and</span>
-			</p>
+			<br>
 			  
 			<div class="input_box">
-			<label for="verif">Verification Code</label>
 			<input type="text" name="verify" id="verify" placeholder="Enter Verification Code" required />
 			</div>
 

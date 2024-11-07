@@ -7,6 +7,7 @@ use App\Http\Controllers\Firebase\Tabulation\CriteriaController;
 use App\Http\Controllers\Firebase\Tabulation\ContestantController;
 use App\Http\Controllers\Firebase\Tabulation\JudgeController;
 use App\Http\Controllers\Firebase\LoginController;
+use App\Http\Controllers\Firebase\RegistrationController;
 
 #Dashboard Controller
 Route::get('/dashboard', function () {
@@ -54,3 +55,7 @@ Route ::get('delete-judge/{id}', [JudgeController::class,'destroy']);
 
 #Login Controller
 Route ::get('login', [LoginController::class,'login']);
+
+
+#Registration Controller
+Route ::get('registration', [RegistrationController::class,'registration']);

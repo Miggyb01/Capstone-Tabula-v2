@@ -20,8 +20,8 @@
                     @forelse ($events as $key => $item)
                     <tr> <!-- Start of the row -->
                         <td>{{ $i++ }}</td>
-                        <td>{{ $item['ename'] }}</td>
-                        <td>{{ $item['eorganizer'] }}</td>
+                        <td>{{ isset($item['ename']) ? $item['ename'] : '' }}</td>
+                        <td>{{ isset($item['eorganizer']) ? $item['eorganizer'] : '' }}</td>
                         <td></td> <!-- If you need to leave this column blank -->
                         <td>
                         <a href="{{ url('edit-event/' . $key) }}" class="btn btn-primary btn-sm">

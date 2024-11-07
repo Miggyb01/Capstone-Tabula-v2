@@ -92,7 +92,7 @@
                             <div class="col">
                                 <label class="form-label">Percentage <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" name="sub_criteria[{{ $index }}][{{ $subIndex }}][percentage]" value="{{ old('sub_criteria.' . $index . '.' . $subIndex . '.percentage') }}" placeholder="Percentage" required>
-                               
+                                 
                             </div>
                             <div class="col-auto">
                                 <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
