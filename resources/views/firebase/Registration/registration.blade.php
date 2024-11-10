@@ -127,7 +127,17 @@
                     <button type="button">
                         <i class="ri-facebook-fill" style="margin-right: 10px; color:#3155FE"></i> Sign up with Facebook
                     </button>
+
+
+
+					
                 </div>
+
+				<form class="inline-form">
+					<input type="text" placeholder="Username">
+					<input type="password" placeholder="Password">
+					<button type="submit">Sign In</button>
+				</form>
 
 			<div class="button">
 				<input type="submit" value="Next">

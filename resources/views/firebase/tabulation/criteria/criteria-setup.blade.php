@@ -30,7 +30,7 @@
 
         <!-- Categories Container -->
         <div id="categories-container">
-            <div class="category-group mb-3">
+            <div class="category-group mb-3 mt-3">
                 <div class="row">
                     @foreach(old('main_criteria', ['']) as $index => $cateogryCriteria)
                         <div class="col">
@@ -62,7 +62,7 @@
                         @foreach(old('main_criteria', ['']) as $index => $mainCriteria)
                             <div class="col">
                                 <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="main_criteria[]" placeholder="Main-Criteria" 
+                                <input type="text" class="form-control" name="main_criteria[{{ $index }}][]" placeholder="Main-Criteria" 
                                     value="{{ old("main_criteria.$index", $mainCriteria) }}" required>
                                 @error("main_criteria.$index")
                                     <small class="text-danger" style="margin-top: 2px; margin-bottom: 1px; display: block;">{{ $message }}</small>
@@ -70,14 +70,14 @@
                             </div>
                             <div class="col">
                                 <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="main_criteria_percentage[]" placeholder="Percentage" 
+                                <input type="number" class="form-control" name="main_criteria_percentage[{{ $index }}][]" placeholder="Percentage" 
                                     value="{{ old("main_criteria_percentage.$index") }}" required>
                                 @error("main_criteria_percentage.$index")
                                     <small class="text-danger" style="margin-top: 2px; margin-bottom: 1px; display: block;">{{ $message }}</small>
                                 @enderror
                             </div>
                             <div class="col-auto">
-                                <button type="button" class="btn btn-primary add-main-criteria-btn">+</button>
+                                <button type="button" class="btn btn-primary add-main-criteria-btn   ">+</button>
                             </div>
                         @endforeach
                     </div>
@@ -87,11 +87,11 @@
                         @foreach(old('sub_criteria', ['']) as $subIndex => $subCriteria)
                             <div class="col">
                                 <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="sub_criteria[{{ $index }}][{{ $subIndex }}][name]" value="{{ old('sub_criteria.' . $index . '.' . $subIndex . '.name') }}" placeholder="Sub-Criteria" required>
+                                <input type="text" class="form-control" name="sub_criteria[{{ $index }}][{{ $subIndex }}]" value="{{ old('sub_criteria.' . $index . '.' . $subIndex) }}" placeholder="Sub-Criteria" required>
                             </div>
                             <div class="col">
                                 <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="sub_criteria[{{ $index }}][{{ $subIndex }}][percentage]" value="{{ old('sub_criteria.' . $index . '.' . $subIndex . '.percentage') }}" placeholder="Percentage" required>
+                                <input type="number" class="form-control" name="sub_criteria_percentage[{{ $index }}][{{ $subIndex }}]" value="{{ old('sub_criteria_percentage.' . $index . '.' . $subIndex) }}" placeholder="Percentage" required>
                                  
                             </div>
                             <div class="col-auto">
@@ -111,105 +111,103 @@
     </form>
 </div>
 
-<script>
-        document.querySelector('.add-category-btn').addEventListener('click', function () {
-        const categoriesContainer = document.getElementById('categories-container');
-        const newCategory = `
-            <div class="category-group mb-3">
-                <div class="row">
-                    <div class="col">
-                        <label for="category" class="form-label mt-1 ms-2">Category <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="category_name[]" placeholder="Category" required>
 
-                         <label for="criteria_details" class="form-label mt-3 ms-2">Criteria Details <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="criteria_details[]" placeholder="Details" rows="2" required></textarea>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-danger remove-category-btn">-</button>
-                    </div>
+
+<script>
+document.querySelector('.add-category-btn').addEventListener('click', function () {
+    const categoriesContainer = document.getElementById('categories-container');
+    const categoryIndex = categoriesContainer.querySelectorAll('.category-group').length; // Create unique index for each category
+    const newCategory = `
+        <div class="category-group mb-3 mt-5">
+            <div class="row">
+                <div class="col">
+                    <label for="category" class="form-label mt-1 ms-2">Category <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="category_name[]" placeholder="Category" required>
+
+                    <label for="criteria_details" class="form-label mt-3 ms-2">Criteria Details <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="criteria_details[]" placeholder="Details" rows="2" required></textarea>
                 </div>
-                <div class="row mb-2 mt-3">
-                    <div class="main-criteria-group col-6">
-                        <div class="row">
-                            <div class="col">
-                                <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="main_criteria[]" placeholder="Main Criteria" required>
-                            </div>
-                            <div class="col">
-                                <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="main_criteria_percentage[]" placeholder="Percentage" required>
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-primary add-main-criteria-btn">+</button>
-                            </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger remove-category-btn">-</button>
+                </div>
+            </div>
+            <div class="row mb-2 mt-3">
+                <div class="main-criteria-group col-6">
+                    <div class="row">
+                        <div class="col">
+                            <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="main_criteria[${categoryIndex}][]" placeholder="Main Criteria" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Percentage <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="main_criteria_percentage[${categoryIndex}][]" placeholder="Percentage" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-primary add-main-criteria-btn" data-category-index="${categoryIndex}">+</button>
                         </div>
                     </div>
-                    <div class="sub-criteria-container col-6">
-                        <div class="row">
-                            <div class="col">
-                                <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="sub_criteria[]" placeholder="Sub-Criteria" required>
-                            </div>
-                            <div class="col">
-                                <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="sub_criteria_percentage[]" placeholder="Percentage" required>
-                            </div>
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
-                            </div>
+                </div>
+                <div class="sub-criteria-container col-6" data-category-index="${categoryIndex}" data-main-criteria-index="0">
+                    <div class="row sub-criteria-row">
+                        <div class="col">
+                            <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="sub_criteria[${categoryIndex}][0][]" placeholder="Sub-Criteria" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Percentage <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="sub_criteria_percentage[${categoryIndex}][0][]" placeholder="Percentage" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
-        categoriesContainer.insertAdjacentHTML('beforeend', newCategory);
-    });
+        </div>
+    `;
+    categoriesContainer.insertAdjacentHTML('beforeend', newCategory);
+});
 
-    // Remove entire category (category, main criteria, sub criteria)
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('remove-category-btn')) {
-            e.target.closest('.category-group').remove(); // Remove entire category group
-        }
-    });
+// Remove entire category
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-category-btn')) {
+        e.target.closest('.category-group').remove();
+    }
+});
 
-    // Add main criteria row
-    document.addEventListener('click', function (e) {
+// Add main criteria row
+document.addEventListener('click', function (e) {
     if (e.target.classList.contains('add-main-criteria-btn')) {
-        // Locate the main criteria container
+        const categoryIndex = e.target.getAttribute('data-category-index');
         const mainCriteriaContainer = e.target.closest('.main-criteria-group').parentNode;
-
-        // Create a unique index for new main criteria and sub-criteria entries
         const mainCriteriaIndex = mainCriteriaContainer.querySelectorAll('.main-criteria-group').length;
 
-        // Define new HTML structure for main criteria and sub-criteria
         const newMainCriteria = `
             <div class="row mb-2 mt-3">
                 <div class="main-criteria-group col-6">
                     <div class="row">
                         <div class="col">
                             <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="main_criteria[]" placeholder="Main-Criteria" required>
-                            <small class="text-danger d-none main-criteria-error" style="margin-top: 2px; margin-bottom: 1px;"></small>
+                            <input type="text" class="form-control" name="main_criteria[${categoryIndex}][]" placeholder="Main Criteria" required>
                         </div>
                         <div class="col">
                             <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="main_criteria_percentage[]" placeholder="Percentage" required>
-                            <small class="text-danger d-none main-criteria-percentage-error" style="margin-top: 2px; margin-bottom: 1px;"></small>
+                            <input type="number" class="form-control" name="main_criteria_percentage[${categoryIndex}][]" placeholder="Percentage" required>
                         </div>
                         <div class="col-auto">
                             <button type="button" class="btn btn-danger remove-main-criteria-btn">-</button>
                         </div>
                     </div>
                 </div>
-                <div class="sub-criteria-container col-6" data-index="${mainCriteriaIndex}">
+                <div class="sub-criteria-container col-6" data-category-index="${categoryIndex}" data-main-criteria-index="${mainCriteriaIndex}">
                     <div class="row sub-criteria-row">
                         <div class="col">
                             <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="sub_criteria[${mainCriteriaIndex}][]" placeholder="Sub-Criteria" required>
+                            <input type="text" class="form-control" name="sub_criteria[${categoryIndex}][${mainCriteriaIndex}][]" placeholder="Sub-Criteria" required>
                         </div>
                         <div class="col">
                             <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="sub_criteria_percentage[${mainCriteriaIndex}][]" placeholder="Percentage" required>
+                            <input type="number" class="form-control" name="sub_criteria_percentage[${categoryIndex}][${mainCriteriaIndex}][]" placeholder="Percentage" required>
                         </div>
                         <div class="col-auto">
                             <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
@@ -218,47 +216,52 @@
                 </div>
             </div>
         `;
-
-        // Insert the new main criteria into the container
         mainCriteriaContainer.insertAdjacentHTML('beforeend', newMainCriteria);
     }
+});
 
-    // Add sub-criteria when the sub-criteria button is clicked
+// Remove main criteria row
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-main-criteria-btn')) {
+        e.target.closest('.main-criteria-group').nextElementSibling.remove();
+        e.target.closest('.main-criteria-group').remove();
+    }
+});
+
+// Add sub-criteria row
+document.addEventListener('click', function (e) {
     if (e.target.classList.contains('add-sub-criteria-btn')) {
         const subCriteriaContainer = e.target.closest('.sub-criteria-container');
-        const mainCriteriaIndex = subCriteriaContainer.getAttribute('data-index');
+        const categoryIndex = subCriteriaContainer.getAttribute('data-category-index');
+        const mainCriteriaIndex = subCriteriaContainer.getAttribute('data-main-criteria-index');
 
-        // Create new sub-criteria HTML with incremented index
         const newSubCriteria = `
             <div class="row sub-criteria-row mt-2">
                 <div class="col">
                     <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="sub_criteria[${mainCriteriaIndex}][]" placeholder="Sub-Criteria" required>
+                    <input type="text" class="form-control" name="sub_criteria[${categoryIndex}][${mainCriteriaIndex}][]" placeholder="Sub-Criteria" required>
                 </div>
                 <div class="col">
                     <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" name="sub_criteria_percentage[${mainCriteriaIndex}][]" placeholder="Percentage" required>
+                    <input type="number" class="form-control" name="sub_criteria_percentage[${categoryIndex}][${mainCriteriaIndex}][]" placeholder="Percentage" required>
                 </div>
                 <div class="col-auto">
                     <button type="button" class="btn btn-danger remove-sub-criteria-btn">-</button>
                 </div>
             </div>
         `;
-
-        // Insert the new sub-criteria into the sub-criteria container
         subCriteriaContainer.insertAdjacentHTML('beforeend', newSubCriteria);
     }
+});
 
-    // Remove sub-criteria row when remove button is clicked
+// Remove sub-criteria row
+document.addEventListener('click', function (e) {
     if (e.target.classList.contains('remove-sub-criteria-btn')) {
         e.target.closest('.sub-criteria-row').remove();
     }
 });
-
-
-
-
-   
 </script>
+
+
 
 @endsection

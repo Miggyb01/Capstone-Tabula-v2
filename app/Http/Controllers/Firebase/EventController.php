@@ -83,32 +83,7 @@ class EventController extends Controller
         }
    }
 
-   public function update(Request $request, $id)
-   {
-        $key = $id;
-        $updateData =[
-            'ename' => $request->Event_name,
-            'etype' => $request->Event_type,
-            'ebanner' => $request->Event_banner,
-            'edescription' => $request->Event_description,
-            'evenue' => $request->Event_venue,
-            'eorganizer' => $request->Event_organizer,
-            'edate' => $request->Event_date,
-            'estart' => $request->Event_start,
-            'eend' => $request->Event_end,
-            'etabYes' => $request->Event_tabulation_Yes,
-            'etabNo' => $request->Event_tabulation_No,
-        ];
-        $res_update = $this->database->getReference($this->tablename.'/'.$key)->update($updateData);
-        if($res_update)
-        {
-            return redirect('event-list')->with('status','Event Updated Successfully');
-        }
-        else
-        {
-            return redirect('event-list')->with('status','Event Not Updated');
-        }
-   }
+   
 
    public function destroy($id)
    {

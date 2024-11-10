@@ -8,6 +8,8 @@ use App\Http\Controllers\Firebase\Tabulation\ContestantController;
 use App\Http\Controllers\Firebase\Tabulation\JudgeController;
 use App\Http\Controllers\Firebase\LoginController;
 use App\Http\Controllers\Firebase\RegistrationController;
+use App\Http\Controllers\Firebase\TestingController;
+use PHPUnit\Event\Code\Test;
 
 #Dashboard Controller
 Route::get('/dashboard', function () {
@@ -59,3 +61,5 @@ Route ::get('login', [LoginController::class,'login']);
 
 #Registration Controller
 Route ::get('registration', [RegistrationController::class,'registration']);
+
+Route ::get('testing', [TestingController::class,'test']);
