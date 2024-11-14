@@ -10,9 +10,8 @@
         </div>
     </div>
 
-    <form action="{{ route('criteria.update', $criteria['id']) }}" method="POST" id="criteriaForm">
-    @csrf
-    @method('PUT')
+    <form action="{{ route('criteria-list') }}" method="POST" id="criteriaForm">
+        @csrf
 
         <!-- Event Selection -->
         <div class="contestant-form-row row">
@@ -40,7 +39,7 @@
                 <input type="text" class="form-control" name="categories[{{$categoryIndex}}][category_name]" placeholder="Category" value="{{ $category['category_name'] }}" required>
 
                 <label for="criteria_details" class="form-label mt-3 ms-2">Criteria Details <span class="text-danger">*</span></label>
-                <textarea class="form-control" name="categories[{{$categoryIndex}}][criteria_details]" rows="2" required> {{ $category['criteria_details'] }}</textarea>
+                <textarea class="form-control" name="criteria_details[]" placeholder="Details" rows="2" required> {{ $category['criteria_details'] }}</textarea>
             </div>
             <div class="col-auto">
                 @if($categoryIndex === 0)
@@ -77,7 +76,7 @@
 
             <!-- Default Sub Criteria -->
             <div class="sub-criteria-container col-6" data-category-index="{{ $categoryIndex }}" data-main-criteria-index="{{ $mainIndex }}">
-                    @foreach($mainCriteria['sub_criteria'] as $subIndex => $subCriteria)
+                    @foreach($mainCriteria['subCriteria'] as $subIndex => $subCriteria)
                         <div class="row sub-criteria-row {{ $subIndex > 0 ? 'mt-2' : '' }}">
                             <div class="col">
                                 <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
@@ -102,11 +101,9 @@
     </div>
     @endforeach
 </div>
-    <!-- Form Buttons -->
-        <div class="form-group text-center">
-            <form action="{{ url(route('criteria-list')) }}" method="get">
-                <button type="submit" class="btn-cancel">Cancel</button>
-            </form>
+ <!-- Form Buttons -->
+ <div class="form-group text-center">
+            <button type="button" class="btn-cancel">Cancel</button>
             <button type="submit" class="btn-add">Update</button>
         </div>
     </form>

@@ -32,9 +32,9 @@ Route ::get('delete-event/{id}', [EventController::class,'destroy']);
 Route::get('/criteria-setup', [CriteriaController::class, 'create'])->name('criteria-setup');
 Route::get('/criteria-list', [CriteriaController::class, 'list'])->name('criteria-list');
 Route::post('criteria-list', [CriteriaController::class, 'store']);
-Route ::get('edit-criteria/{id}', [CriteriaController::class,'edit']);
-Route ::put('update-criteria/{id}', [CriteriaController::class,'update' ]);
-Route ::get('delete-criteria/{id}', [CriteriaController::class,'destroy']);
+Route::get('/edit-criteria/{id}', [CriteriaController::class, 'edit'])->name('criteria.edit');
+Route::put('/update-criteria/{id}', [CriteriaController::class, 'update'])->name('criteria.update');
+Route::get('delete-criteria/{id}', [CriteriaController::class,'destroy']);
 
 
 #Contestant Controller
@@ -48,11 +48,12 @@ Route ::get('delete-contestant/{id}', [ContestantController::class,'destroy']);
 
 #Judge Controller
 Route ::get('judge-setup', [JudgeController::class,'create']);
-Route ::get('judge-list', [JudgeController::class,'list']);
+Route ::get('judge-list', [JudgeController::class,'list'])->name('judge-list');
 Route ::post('judge-list', [JudgeController::class,'store']);
 Route ::get('edit-judge/{id}', [JudgeController::class,'edit']);
 Route ::put('update-judge/{id}', [JudgeController::class,'update']);
 Route ::get('delete-judge/{id}', [JudgeController::class,'destroy']);
+Route::get('reset-judge-password/{id}', [JudgeController::class, 'resetPassword']);
 
 
 #Login Controller

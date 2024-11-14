@@ -2,7 +2,12 @@
 
 @section('content')
 
-<h3 class=" fw-bold fs-4 mb-1 mt-4 ms-4">Event List</h3> 
+<div class="d-flex justify-content-between mb-3">
+    <h3 class="fw-bold fs-4 mb-1 mt-4 ms-4">Event List</h3> 
+    <a href="{{ url('event-setup') }}" class="add-criteria-setup-btn btn btn-primary">
+        <i class="ri-add-circle-line"></i> Add Event
+    </a>
+</div>
     <div class="table-row mt-3 " >
         <div class="col-12 ">
             <table class="table table-sm table-hover ">

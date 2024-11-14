@@ -1,4 +1,4 @@
-/* Sidebar Styling */
+Sidebar Styling
 
 ::after,
 ::before {
@@ -70,6 +70,16 @@ body {
 .toggle-btn i {
     font-size: 1.5rem;
     color: #333333; /* Icon color */
+}
+
+.sidebar-logo {
+    width: 60px;
+    height: 40px;
+}
+
+img {
+    width: 124px;
+    height: 55px;
 }
 
 .sidebar-logo {
@@ -351,6 +361,26 @@ h6 {
     color: white ;
   }
 
+       
+.btn-update{ 
+    align-items: center;
+    background: #F5F5F5;
+    color: black;
+    height: 40px;
+    width: 160px;
+    font-size: 20px;
+    font-weight: bolder;
+    border-radius: 10px;
+    border-style: solid;
+}
+
+.btn-update:hover {
+    background-color: #2544CB;
+    font-weight: bold;
+    color: white ;
+  }
+
+
 .form-label{
     font-size: 20px;
     font-weight: bold;
@@ -425,3 +455,106 @@ th{
 
 /* Criteria style*/
 
+
+.criteria-container {
+    color: black;
+}
+.criteria-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 25px;
+    margin-left: 20px;
+    margin-right: 20px;
+    
+}
+
+.criteria-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+
+.criteria-details {
+    margin-bottom: 20px;
+}
+
+.category-section {
+    margin-top: 20px;
+}
+
+.category-header {
+    background-color: #F5F5F5;
+    padding: 12px ;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-content {
+    padding: 0 20px;
+}
+
+.main-criteria-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.main-criteria-header {
+   
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.criteria-star {
+    color: #ffd700;
+    margin-right: 5px;
+}
+
+.sub-criteria-list {
+    padding-left: 35px;
+    font-size: 17px;
+}
+
+.sub-criteria-item {
+    border-radius: 6px;
+    margin-bottom: 8px;
+    
+  
+}
+
+.percentage-badge {
+    border-radius: 4px;
+    font-size: 0.9em;
+   
+}
+
+.debug-info {
+    background: #fff3cd;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-family: monospace;
+}
+.ri-arrow-down-s-line{
+    margin-right: 10px;
+}
+
+.bullet {
+    margin-right: 10px;
+    font-size: 25px;
+}
+.add-criteria-setup-btn {
+    margin-right: 25px;
+    margin-top: 20px;
+}

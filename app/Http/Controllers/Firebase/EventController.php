@@ -55,8 +55,6 @@ class EventController extends Controller
             'edate' => $request->Event_date,
             'estart' => $request->Event_start,
             'eend' => $request->Event_end,
-            'etabYes' => $request->Event_tabulation_Yes,
-            'etabNo' => $request->Event_tabulation_No,
         ];
         $postRef = $this->database->getReference($this->tablename)->push($postData);
         if($postRef)

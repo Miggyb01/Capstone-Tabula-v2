@@ -65,20 +65,6 @@
                 </div>
             </div>
 
-            <!-- Tabulation -->
-            <div class="event-form-row ">
-                <label for="organizer" class="form-label">Tabulation</label>
-                <div class="form-check form-check-inline ms-4">
-                    <input class="form-check-input" type="radio" name="tabulation" id="tabulationYes" value="yes" required {{ (isset($editdata['etabYes']) && $editdata['etabYes'] == 'yes') ? 'checked' : '' }}>
-                    <label class="form-check-label" for="tabulationYes">Yes</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="tabulation" id="tabulationNo" value="no" required {{ (isset($editdata['etabNo']) && $editdata['etabNo'] == 'no') ? 'checked' : '' }}>
-                    <label class="form-check-label" for="tabulationNo">No</label>
-                </div>
-            </div>
-            
-
             <!-- Buttons -->
             <div class="form-group text-center ">
                 <button type="button" class="btn-cancel">Cancel</button>

@@ -4,9 +4,6 @@
                 <button class="toggle-btn" type="button">
                     <i class="ri-menu-line"></i>
                 </button> 
-                <div class="sidebar-logo ">
-                    <a href="{{ route('dashboard') }}" >Tabula</a>
-                </div>
             </div>
             <ul class="sidebar-nav  ">
                 <li class="sidebar-item">
@@ -55,7 +52,7 @@
                                     <a href="criteria-setup" class="sidebar-link">Criteria Setup</a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="#" class="sidebar-link">Criteria List</a>
+                                    <a href="criteria-list" class="sidebar-link">Criteria List</a>
                                 </li>
                             </ul>
                         </li>
@@ -120,6 +117,11 @@
                 <form action="#" class="d-none d-sm-inline-block">
                 </form>
                 <div class="navbar-collapse collapse">
+                <div class="sidebar-logo ">
+                    <a href="{{ route('dashboard') }}">
+                    <img src="{{ asset('tabulaLOGO.png') }}" >
+                    </a>
+                </div>
                     <ul class="navbar-nav ms-auto">
                         <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
                                 <i class="ri-account-circle-line"></i>
@@ -140,4 +142,5 @@
 hamBurger.addEventListener("click", function () {
   document.querySelector("#sidebar").classList.toggle("expand");
 });
+
 </script>

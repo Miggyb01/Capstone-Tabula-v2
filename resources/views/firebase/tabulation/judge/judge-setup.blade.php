@@ -46,34 +46,10 @@
                 <textarea class="form-control"  name="Judge_achievement" id="contestantBackground" rows="3" required></textarea>
             </div>
 
-            <!-- Second row -->
-            <div class="contestant-form-row row ">
-                <div class="col">
-                    <label for="venue" class="form-label form-label mt-1 ms-2 ">Username</label>
-                    <input type="text" class="form-control "  name="Judge_username" id="judgeUsername" placeholder="Username" required>
-                </div>
-                <div class="col">
-                    <label for="organizer" class="form-label form-label mt-1 ms-2 ">Password</label>
-                    <input type="text" class="form-control"  name="Judge_password" id="judgePassword" placeholder="Password" required>
-                </div>
-            </div>
-
-             <!-- Assign Event Dropdown -->
-        
-        <!-- <div class="contestant-form-row row">
-            <label for="assignEvent" class="form-label">Assign Event</label>
-            <select class="form-control" name="assign_event" id="assignEvent" required>
-                <option value="" selected disabled>Select Event</option>
-                <option value="event1">Event 1</option>
-                <option value="event2">Event 2</option>
-                <option value="event3">Event 3</option>
-           
-            </select>
-        </div> -->
 
             <!-- Buttons -->
             <div class="form-group text-center ">
-                <button type="button" class="btn-cancel">Cancel</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('dashboard') }}'">Cancel</button>
                 <button type="submit" class="btn-add">Add</button>
               </div>
         </form>

@@ -61,7 +61,7 @@
 
         <!-- Buttons -->
         <div class="form-group text-center">
-            <button type="button" class="btn-cancel">Cancel</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('dashboard') }}'">Cancel</button>
             <button type="submit" class="btn-add">Add</button>
         </div>
     </form>
