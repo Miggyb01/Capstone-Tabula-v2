@@ -125,6 +125,7 @@ return [
 
     'provider'=> [
         Kreait\Laravel\Firebase\ServiceProvider::class,
+        App\Providers\FirebaseServiceProvider::class,
     
     ],
 
