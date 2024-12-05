@@ -15,7 +15,9 @@
 </head> 
 <body>
 
-    @include('firebase.inc.judge-navbar')
+  
+
+        @include('firebase.inc.judge-navbar')
 
         @yield('content')
       

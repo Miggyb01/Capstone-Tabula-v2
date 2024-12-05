@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Firebase\Organizer;
+namespace App\Http\Controllers\Firebase\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
+use function PHPUnit\Framework\returnValueMap;
 
 class OrganizerContestantController extends Controller
 {
@@ -18,13 +19,13 @@ class OrganizerContestantController extends Controller
     {
         $contestants = $this->database->getReference($this->tablename)->getValue();
         #$total_events = $reference = $this->database->getReference($this->tablename)->getSnapshot()->numChildren();
-        return view('firebase.organizer.contestant.organizer-contestant-list', compact('contestants'));
+        return view('firebase.organizer.contestant.contestant-list', compact('contestants'));
     }
     public function create()
     {
         $events = $this->database->getReference('events')->getValue();
 
-        return view('firebase.organizer.contestant.organizer-contestant-setup', compact('events'));
+        return view('firebase.organizer.contestant.contestant-setup', compact('events'));
     }
 
     public function store(Request $request)
@@ -40,9 +41,11 @@ class OrganizerContestantController extends Controller
         ];
         $postRef = $this->database->getReference($this->tablename)->push($postData);
         if ($postRef) {
-            return redirect('organizer-contestant-list')->with('success', 'Contestant Added Successfully ');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('success', 'Contestant Added Successfully');
         } else {
-            return redirect('organizer-contestant-list')->with('error', 'Contestant Not added');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('error', 'Contestant Not Added');
         }
     }
     public function edit($id)
@@ -54,9 +57,10 @@ class OrganizerContestantController extends Controller
             // Fetch all events
             $events = $this->database->getReference('events')->getValue();
 
-            return view('firebase.organizer.contestant.organizer-contestant-edit', compact('editdata', 'key', 'events'));
+            return view('firebase.organizer.contestant.contestant-edit', compact('editdata', 'key', 'events'));
         } else {
-            return redirect('organizer-contestant-list')->with('status', 'Contestant ID or Event Name not Found');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('status', 'Contestant ID or Event Name not Found');
         }
     }
 
@@ -73,11 +77,15 @@ class OrganizerContestantController extends Controller
             'cgender' => $request->Contestant_gender,
             'cbackground' => $request->Contestant_background,
         ];
+        
         $res_update = $this->database->getReference($this->tablename . '/' . $key)->update($updateData);
+        
         if ($res_update) {
-            return redirect('organizer-contestant-list')->with('status', 'Event Updated Successfully');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('status', 'Contestant Updated Successfully');
         } else {
-            return redirect('organizer-contestant-list')->with('status', 'Event Not Updated');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('status', 'Contestant Not Updated');
         }
     }
     public function destroy($id)
@@ -85,9 +93,11 @@ class OrganizerContestantController extends Controller
         $key = $id;
         $del_data = $this->database->getReference($this->tablename . '/' . $key)->remove();
         if ($del_data) {
-            return redirect('organizer-contestant-list')->with('status', 'Contestant Deleted Successfully');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('status', 'Contestant Deleted Successfully');
         } else {
-            return redirect('organizer-contestant-list')->with('status', 'Contestant Not Deleted');
+            return redirect()->route('organizer.contestant.list')
+                            ->with('status', 'Contestant Not Deleted');
         }
     }
 }

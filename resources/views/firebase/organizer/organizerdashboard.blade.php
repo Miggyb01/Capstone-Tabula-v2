@@ -1,4 +1,3 @@
-
 @extends('firebase.layouts.organizer-app')
 
 

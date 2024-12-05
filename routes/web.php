@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Firebase\HomeController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+
+//Admin Routes
 use App\Http\Controllers\Firebase\Admin\AdminEventController;
 use App\Http\Controllers\Firebase\Admin\AdminCriteriaController;
 use App\Http\Controllers\Firebase\Admin\AdminContestantController;
@@ -12,11 +14,24 @@ use App\Http\Controllers\Firebase\Admin\AdminCalendarController;
 use App\Http\Controllers\Firebase\Admin\AdminResultController;
 use App\Http\Controllers\Firebase\Admin\AdminScoreController;
 use App\Http\Controllers\Firebase\Admin\AdminReportController;
+use App\Http\Controllers\Firebase\Admin\AdminOrganizerController;
+
+// Organizer Routes
 use App\Http\Controllers\Firebase\Organizer\OrganizerContestantController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerEventController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerCriteriaController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerJudgeController;
+use App\Http\Controllers\Firebase\Organizer\OrganizerCalendarController;
+use App\Http\Controllers\Firebase\Organizer\OrganizerResultController;
+use App\Http\Controllers\Firebase\Organizer\OrganizerScoreController;
+use App\Http\Controllers\Firebase\Organizer\OrganizerReportController;
 
+// Judge Routes
+use App\Http\Controllers\Firebase\Judge\JudgeEventController;
+use App\Http\Controllers\Firebase\Judge\JudgeScoreController;
+use App\Http\Controllers\Firebase\Judge\JudgeReportController;
+use App\Http\Controllers\Firebase\Judge\JudgeTabulationController; 
+use App\Http\Controllers\Firebase\Judge\JudgeCalendarController;
 
 // Home Route
 Route::get('/', [HomeController::class, 'index']);
@@ -79,7 +94,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     Route::get('/calendar', [AdminCalendarController::class, 'index'])->name('calendar');
+
+    Route::get('/score', [AdminScoreController::class, 'score'])->name('score');
+
+    Route::get('/result', [AdminResultController::class, 'result'])->name('result');
+
+    Route::get('/report', [AdminReportController::class, 'report'])->name('report');
+
+    Route::get('/profile', [AdminOrganizerController::class, 'profile'])->name('profile');
 });
+
 
 // Organizer Routes
 Route::prefix('organizer')->name('organizer.')->group(function () {
@@ -126,24 +150,40 @@ Route::prefix('organizer')->name('organizer.')->group(function () {
         Route::get('/delete/{id}', [OrganizerJudgeController::class, 'destroy'])->name('delete');
         Route::get('/reset-password/{id}', [OrganizerJudgeController::class, 'resetPassword'])->name('reset-password');
     });
+
+    Route::get('/calendar', [OrganizerCalendarController::class, 'index'])->name('calendar');
+
+    Route::get('/score', [OrganizerScoreController::class, 'score'])->name('score');
+
+    Route::get('/result', [OrganizerResultController::class, 'result'])->name('result');
+    
+    Route::get('/report', [OrganizerReportController::class, 'report'])->name('report');
 });
+
+// Judge Routes
+Route::prefix('judge')->name('judge.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [JudgeEventController::class, 'dashboard'])->name('dashboard');
+    
+    Route::get('/calendar', [JudgeCalendarController::class, 'index'])->name('calendar');
+
+    // Tabulation Routes
+    Route::prefix('tabulation')->group(function () {
+        // Main tabulation form page that shows events, contestants and criteria
+        Route::get('/', [JudgeTabulationController::class, 'index'])->name('tabulation');
+        
+        // Save scoring endpoint
+        Route::post('/save-score', [JudgeTabulationController::class, 'saveScore'])->name('tabulation.save');
+    });
+
+    Route::get('/score', [JudgeScoreController::class, 'score'])->name('score');
+
+    Route::get('/result', [JudgeResultController::class, 'result'])->name('result');
+    
+    Route::get('/report', [JudgeReportController::class, 'report'])->name('report');
+});
+
+
 
 // Judge Panel Routes
-Route::middleware(['judge.auth'])->prefix('judge')->name('judge.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/calendar', [DashboardController::class, 'calendar'])->name('calendar');
-    Route::get('/events/active', [DashboardController::class, 'activeEvents'])->name('events.active');
-    Route::get('/scoring', [DashboardController::class, 'scoring'])->name('scoring');
-    Route::get('/results', [DashboardController::class, 'results'])->name('results');
-});
 
-// Tabulation Routes
-Route::prefix('tabulation')->name('tabulation.')->group(function () {
-    Route::get('/', [TabulationController::class, 'index'])->name('index');
-    Route::post('/save-scores', [TabulationController::class, 'saveScores'])->name('save-scores');
-    Route::get('/results', [TabulationController::class, 'getResults'])->name('results');
-    Route::get('/scores', [ScoreController::class, 'index'])->name('scores');
-    Route::get('/scores/export', [ScoreController::class, 'export'])->name('export');
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports');
-    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
-});

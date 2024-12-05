@@ -93,7 +93,7 @@
                         </li>
                         <!-- Inside tabulation dropdown -->
                         <li class="sidebar-item">
-                            <a href="{{ route('tabulation.scores') }}" class="sidebar-link">
+                            <a href="{{ route('admin.score') }}" class="sidebar-link">
                                 <i class="ri-file-list-line"></i>
                                 Scores
                             </a>
@@ -110,6 +110,12 @@
                     <a href="#" class="sidebar-link">
                         <i class="ri-line-chart-line"></i>
                         <span>Report</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">    
+                    <a href="#" class="sidebar-link">
+                        <i class="ri-profile-line"></i>
+                        <span>Oraganizer</span>
                     </a>
                 </li>
             </ul>

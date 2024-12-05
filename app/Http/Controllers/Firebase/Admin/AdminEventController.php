@@ -26,11 +26,32 @@ class AdminEventController extends Controller
     }
     public function list()
     {   
-
-        $events= $this->database->getReference($this->tablename)->getValue();
-        #$total_events = $reference = $this->database->getReference($this->tablename)->getSnapshot()->numChildren();
-        return view('firebase.admin.event.event-list',compact('events'));
-
+        $request = request();
+        $query = $this->database->getReference($this->tablename);
+        $events = $query->getValue() ?? [];
+    
+        // Convert to collection for easier manipulation
+        $events = collect($events)->map(function($item, $key) {
+            return array_merge(['id' => $key], $item);
+        });
+    
+        // Search functionality
+        if ($request->has('search')) {
+            $searchTerm = strtolower($request->search);
+            $events = $events->filter(function($item) use ($searchTerm) {
+                return str_contains(strtolower($item['ename'] ?? ''), $searchTerm);
+            });
+        }
+    
+        // Sorting
+        $sortBy = $request->get('sort', 'newest');
+        if ($sortBy === 'newest') {
+            $events = $events->sortByDesc('id');
+        } else {
+            $events = $events->sortBy('id');
+        }
+    
+        return view('firebase.admin.event.event-list', compact('events'));
     }
 
     public function create()
@@ -125,5 +146,8 @@ class AdminEventController extends Controller
             return redirect('event-list')->with('status','Event Not Deleted');
         }
    }
+
+
+   
 }
 

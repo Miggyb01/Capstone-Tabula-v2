@@ -7,13 +7,13 @@
             </div>
             <ul class="sidebar-nav  ">
                 <li class="sidebar-item">
-                    <a href="{{ route('dashboard') }}" class="sidebar-link">
+                    <a href="{{ route('organizer.dashboard') }}" class="sidebar-link">
                         <i class="ri-dashboard-line"></i>
                         <span >Dashboard</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="{{ route('tabulation.calendar') }}" class="sidebar-link">
+                    <a href="{{ route('organizer.calendar')}}" class="sidebar-link">
                         <i class="ri-calendar-todo-line"></i>
                         <span>Calendar</span>
                     </a>
@@ -26,10 +26,10 @@
                     </a>
                     <ul id="event" class="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
                         <li class="sidebar-item">
-                            <a href="event-setup" class="sidebar-link">Event Setup</a>
+                            <a href="{{ route('organizer.event.setup') }}" class="sidebar-link">Event Setup</a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="event-list" class="sidebar-link">Event List</a>
+                            <a href="{{ route('organizer.event.list') }}" class="sidebar-link">Event List</a>
                         </li>
                     </ul>                    
                 </li>
@@ -49,10 +49,11 @@
                             </a>
                             <ul id="criteria" class="sidebar-sub-dropdown list-unstyled collapse">
                                 <li class="sidebar-item">
-                                    <a href="criteria-setup" class="sidebar-link">Criteria Setup</a>
+                                    <a href="{{ route('organizer.criteria.setup') }}" class="sidebar-link">Criteria Setup</a>
+                                    
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="criteria-list" class="sidebar-link">Criteria List</a>
+                                    <a href="{{ route('organizer.criteria.list') }}" class="sidebar-link">Criteria List</a>
                                 </li>
                             </ul>
                         </li>
@@ -66,10 +67,10 @@
                             </a>
                             <ul id="contestant" class="sidebar-sub-dropdown list-unstyled collapse">
                                 <li class="sidebar-item">
-                                    <a href="contestant-setup" class="sidebar-link">Contestant Setup </a>
+                                    <a href="{{ route('organizer.contestant.setup') }}" class="sidebar-link">Contestant Setup</a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="contestant-list" class="sidebar-link">Contestant List</a>
+                                    <a href="{{ route('organizer.contestant.list') }}" class="sidebar-link">Contestant List</a>
                                 </li>
                             </ul>
                         </li>
@@ -83,16 +84,16 @@
                             </a>
                             <ul id="judge" class="sidebar-sub-dropdown list-unstyled collapse">
                                 <li class="sidebar-item">
-                                    <a href="judge-setup" class="sidebar-link">Judge Setup</a>
+                                    <a href="{{ route('organizer.judge.setup') }}" class="sidebar-link">Judges Setup</a>           
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="judge-list" class="sidebar-link">Judges List</a>
+                                    <a href="{{ route('organizer.judge.list') }}" class="sidebar-link">Judges List</a>
                                 </li>
                             </ul>
                         </li>
                         <!-- Inside tabulation dropdown -->
                         <li class="sidebar-item">
-                            <a href="{{ route('tabulation.scores') }}" class="sidebar-link">
+                            <a href="{{ route('organizer.score') }}" class="sidebar-link">
                                 <i class="ri-file-list-line"></i>
                                 Scores
                             </a>
@@ -119,7 +120,7 @@
                 </form>
                 <div class="navbar-collapse collapse">
                 <div class="sidebar-logo ">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ route('organizer.dashboard') }}">
                     <img src="{{ asset('tabulaLOGO.png') }}" >
                     </a>
                 </div>
