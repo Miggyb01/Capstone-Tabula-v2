@@ -37,6 +37,7 @@ use App\Http\Controllers\Firebase\Judge\JudgeCalendarController;
 Route::get('/', [HomeController::class, 'index']);
 
 // Authentication Routes
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -49,6 +50,7 @@ Route::get('/dashboard', function() {
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
+    
     Route::get('/dashboard', [AdminEventController::class, 'dashboard'])->name('dashboard');
     
     // Event Routes
@@ -160,21 +162,25 @@ Route::prefix('organizer')->name('organizer.')->group(function () {
     Route::get('/report', [OrganizerReportController::class, 'report'])->name('report');
 });
 
+
+
 // Judge Routes
 Route::prefix('judge')->name('judge.')->group(function () {
-    // Dashboard
     Route::get('/dashboard', [JudgeEventController::class, 'dashboard'])->name('dashboard');
-    
-    Route::get('/calendar', [JudgeCalendarController::class, 'index'])->name('calendar');
 
     // Tabulation Routes
     Route::prefix('tabulation')->group(function () {
         // Main tabulation form page that shows events, contestants and criteria
         Route::get('/', [JudgeTabulationController::class, 'index'])->name('tabulation');
+        Route::get('/contestants/{eventName}', [JudgeTabulationController::class, 'getContestantsByEvent'])->name('getContestantsByEvent');
+        
         
         // Save scoring endpoint
         Route::post('/save-score', [JudgeTabulationController::class, 'saveScore'])->name('tabulation.save');
+        
     });
+
+    Route::get('/calendar', [JudgeScoreController::class, 'calendar'])->name('calendar');
 
     Route::get('/score', [JudgeScoreController::class, 'score'])->name('score');
 
@@ -182,8 +188,4 @@ Route::prefix('judge')->name('judge.')->group(function () {
     
     Route::get('/report', [JudgeReportController::class, 'report'])->name('report');
 });
-
-
-
-// Judge Panel Routes
 

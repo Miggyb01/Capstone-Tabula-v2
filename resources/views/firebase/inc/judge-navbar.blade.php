@@ -49,12 +49,26 @@
                     </a>
                 </div>
                     <ul class="navbar-nav ms-auto">
-                        <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                <i class="ri-account-circle-line"></i>
+                        <li class="nav-item dropdown">
+                            <a href="#" data-bs-toggle="dropdown" class="nav-link dropdown-toggle d-flex align-items-center">
+                                <i class="ri-account-circle-line me-1"></i>
+                                <span>{{ Session::get('user')['name'] }} (Judge)</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end rounded">
-                                <span class="fw-bold">
-                                </span>
+                                <div class="dropdown-header">
+                                    <span class="fw-bold">Judge Account</span>
+                                    <div class="small text-muted">{{ Session::get('user')['username'] }}</div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item">
+                                    <i class="ri-user-settings-line me-2"></i>Profile Settings
+                                </a>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="ri-logout-box-line me-2"></i>Logout
+                                    </button>
+                                </form>
                             </div>
                         </li>
                     </ul>

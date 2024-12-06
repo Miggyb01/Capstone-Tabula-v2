@@ -114,7 +114,7 @@
                 </li>
                 <li class="sidebar-item">    
                     <a href="#" class="sidebar-link">
-                        <i class="ri-profile-line"></i>
+                        <i class="ri-profile-line"></i>         
                         <span>Oraganizer</span>
                     </a>
                 </li>
@@ -131,19 +131,30 @@
                     </a>
                 </div>
                     <ul class="navbar-nav ms-auto">
-                        <a href="#" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-                                <i class="ri-account-circle-line"></i>
+                        <li class="nav-item dropdown">
+                            <a href="#" data-bs-toggle="dropdown" class="nav-link dropdown-toggle d-flex align-items-center">
+                                <i class="ri-account-circle-line me-1"></i>
+                                <span>Admin</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end rounded">
-                                <span class="fw-bold">
-                                </span>
+                                <div class="dropdown-header">
+                                    <span class="fw-bold">Admin Account</span>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a href="#" class="dropdown-item">
+                                    <i class="ri-user-settings-line me-2"></i>Profile Settings
+                                </a>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="ri-logout-box-line me-2"></i>Logout
+                                    </button>
+                                </form>
                             </div>
                         </li>
                     </ul>
                 </div>
             </nav>
-    
-    
     <script>
   const hamBurger = document.querySelector(".toggle-btn");
 
@@ -151,4 +162,48 @@ hamBurger.addEventListener("click", function () {
   document.querySelector("#sidebar").classList.toggle("expand");
 });
 
+
 </script>
+
+<style>
+
+.nav-link {
+    color: #333;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-menu {
+    min-width: 200px;
+    padding: 0.5rem 0;
+    margin: 0;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-header {
+    padding: 0.5rem 1rem;
+    color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    color: #333;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #fee;
+}
+
+.dropdown-divider {
+    margin: 0.5rem 0;
+}
+
+</style>
