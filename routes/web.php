@@ -41,8 +41,14 @@ Route::get('/', [HomeController::class, 'index']);
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-Route::get('/register', [RegisterController::class, 'registration'])->name('register');
-Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
+
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
+Route::get('/email/verify', [RegisterController::class, 'showVerificationNotice'])
+    ->name('verify.email.notice');
+Route::post('/email/verification-resend', [RegisterController::class, 'resendVerification'])
+    ->name('verification.resend');
+
 
 Route::get('/dashboard', function() {
     return redirect()->route('admin.dashboard');
@@ -107,6 +113,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 
+
 // Organizer Routes
 Route::prefix('organizer')->name('organizer.')->group(function () {
     // Dashboard
@@ -166,26 +173,27 @@ Route::prefix('organizer')->name('organizer.')->group(function () {
 
 // Judge Routes
 Route::prefix('judge')->name('judge.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', [JudgeEventController::class, 'dashboard'])->name('dashboard');
-
+    
     // Tabulation Routes
     Route::prefix('tabulation')->group(function () {
-        // Main tabulation form page that shows events, contestants and criteria
-        Route::get('/', [JudgeTabulationController::class, 'index'])->name('tabulation');
-        Route::get('/contestants/{eventName}', [JudgeTabulationController::class, 'getContestantsByEvent'])->name('getContestantsByEvent');
-        
-        
-        // Save scoring endpoint
-        Route::post('/save-score', [JudgeTabulationController::class, 'saveScore'])->name('tabulation.save');
-        
+        Route::get('/', [JudgeTabulationController::class, 'index'])->name('index');
+        Route::post('/save-score', [JudgeTabulationController::class, 'saveScore'])->name('save-score');
     });
+    
+    // Make tabulation accessible directly as well
+    Route::get('/tabulation', [JudgeTabulationController::class, 'index'])->name('tabulation');
 
-    Route::get('/calendar', [JudgeScoreController::class, 'calendar'])->name('calendar');
+    // Calendar Route
+    Route::get('/calendar', [JudgeCalendarController::class, 'index'])->name('calendar');
 
+    // Score Route
     Route::get('/score', [JudgeScoreController::class, 'score'])->name('score');
 
+    // Result Route
     Route::get('/result', [JudgeResultController::class, 'result'])->name('result');
     
+    // Report Route
     Route::get('/report', [JudgeReportController::class, 'report'])->name('report');
 });
-

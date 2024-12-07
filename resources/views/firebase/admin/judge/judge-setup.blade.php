@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <form action="{{ url('judge-list') }}" method="POST">
+        <form action="{{ route('admin.judge.store') }}" method="POST">
             @csrf
             <div class="contestant-form-row row">
                 <div class="col">

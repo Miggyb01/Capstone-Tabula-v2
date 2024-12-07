@@ -31,7 +31,7 @@ class AdminContestantController extends Controller
     public function store(Request $request)
     {
         $postData = [
-            'event_name' => $request->event_name,
+            'ename' => $request->event_name,
             'cfname' => $request->Contestant_firstname,
             'cmname' => $request->Contestant_middlename,
             'clname' => $request->Contestant_lastname,
@@ -40,13 +40,9 @@ class AdminContestantController extends Controller
             'cbackground' => $request->Contestant_background,
         ];
         $postRef = $this->database->getReference($this->tablename)->push($postData);
-        if ($postRef) {
-            return redirect()->route('admin.contestant.list')
-                            ->with('success', 'Contestant Added Successfully');
-        } else {
-            return redirect()->route('admin.contestant.list')
-                            ->with('error', 'Contestant Not Added');
-        }
+        return $postRef 
+            ? redirect()->route('admin.contestant.list')->with('success', 'Judge Added Successfully')
+            : redirect()->route('admin.contestant.list')->with('error', 'Judge Not added');
     }
     public function edit($id)
     {
@@ -56,7 +52,7 @@ class AdminContestantController extends Controller
         if ($editdata && isset($editdata['event_name'])) {
             // Fetch all events
             $events = $this->database->getReference('events')->getValue();
-
+            
             return view('firebase.admin.contestant.contestant-edit', compact('editdata', 'key', 'events'));
         } else {
             return redirect()->route('admin.contestant.list')

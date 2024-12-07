@@ -11,7 +11,7 @@
         </div>
 
 
-        <form action="{{ url('admin/event/store') }}" method="POST">
+        <form action="{{ route('admin.event.store') }}" method="POST">
             
             @csrf
             

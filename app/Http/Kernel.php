@@ -55,7 +55,7 @@ class Kernel extends HttpKernel
         // Add our custom admin middleware
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'judge' => \App\Http\Middleware\JudgeMiddleware::class,
-
+        'organizer' => \App\Http\Middleware\OrganizerMiddleware::class,
         
 
     ];

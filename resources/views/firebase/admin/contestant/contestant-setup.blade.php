@@ -9,8 +9,7 @@
         </div>
     </div>
 
-    <form action="{{ url('contestant-list') }}" method="POST">
-        
+    <form action="{{ route('admin.contestant.store') }}" method="POST">      
         @csrf
         
         <!-- Event Dropdown -->

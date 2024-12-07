@@ -75,15 +75,11 @@ class AdminEventController extends Controller
             'estart' => $request->Event_start,
             'eend' => $request->Event_end,
         ];
+
         $postRef = $this->database->getReference($this->tablename)->push($postData);
-        if($postRef)
-        {
-            return redirect('admin/event/list')->with('success','Event Added Successfully ');
-        }
-        else
-        {
-            return redirect('admin/event/list')->with('error','Event Not added');
-        }
+        return $postRef 
+            ? redirect()->route('admin.event.list')->with('success', 'Judge Added Successfully')
+            : redirect()->route('admin.event.list')->with('error', 'Judge Not added');
     }
     public function update(Request $request, $id)
     {

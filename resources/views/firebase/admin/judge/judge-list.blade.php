@@ -36,7 +36,7 @@
                     <td>{{ $item['jfname'] }} {{ $item['jmname'] }} {{ $item['jlname'] }}</td>
                     <td>{{ $item['jusername'] }}</td>
                     <td>••••••••</td>
-                    <td>{{ isset($item['event_name']) ? $item['event_name'] : 'N/A' }}</td>
+                    <td>{{ $item['event_name'] }}</td>
                     <td>{{ isset($item['status']) ? $item['status'] : 'Active' }}</td>
                     <td>
                         <a href="{{ route('admin.judge.edit', $key)}}" class="btn btn-primary btn-sm">

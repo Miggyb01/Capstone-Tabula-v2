@@ -1,229 +1,172 @@
 @extends('firebase.layouts.judge-app')
 
 @section('content')
-<div class="container-fluid-judge-tabulation">
-    <div class="card-judge-tabulation">
-        <div class="card-header">
-            <h3>Event Tabulation</h3>
-        </div>
-
-        <div class="card-body-judge-tabulation">
-            <!-- Debug Info Section (can be removed in production) -->
-            <div id="debugInfo" class="alert alert-info" style="display: none;">
-                <pre></pre>
-            </div>
-
-            <!-- Event Selection -->
-            <div class="select-container-judge-tabulation mb-4">
-                <label for="eventSelect" class="form-label-judge-tabulation">Select Event</label>
-                <select class="form-select select-judge-tabulation" id="eventSelect" name="event_name">
-                    <option value="">Select Event</option>
-                    @if($events)
-                        @foreach($events as $eventId => $event)
-                            <option value="{{ $event['ename'] }}">
-                                {{ $event['ename'] }}
-                            </option>
-                        @endforeach
-                    @endif
-                </select>
-            </div>
-
-            <!-- Loading Indicator -->
-            <div id="loadingIndicator" style="display: none;" class="text-center my-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Contestant Scoring</h4>
+                        <div class="input-group" style="width: 250px;">
+                            <input type="text" class="form-control" placeholder="Search contestants..." id="searchContestants">
+                            <span class="input-group-text">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Contestants Section -->
-            <div id="contestantsSection" class="mt-4">
-                <!-- Contestants will be loaded here -->
             </div>
         </div>
     </div>
+
+    @if(isset($contestants) && count($contestants) > 0)
+        @foreach($contestants as $contestantId => $contestant)
+        <div class="contestant-card mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="mb-1">{{ $contestant['cfname'] }} {{ $contestant['clname'] }}</h5>
+                            <small class="text-muted">Number: {{ $contestant['number'] ?? '001' }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">Category A</span>
+                        </div>
+                    </div>
+
+                    <form class="scoring-form" data-contestant-id="{{ $contestantId }}">
+                        @csrf
+                        <input type="hidden" name="event_id" value="{{ $event['id'] ?? '' }}">
+                        <input type="hidden" name="contestant_id" value="{{ $contestantId }}">
+
+                        @if(isset($criteria['categories']))
+                            @foreach($criteria['categories'] as $categoryId => $category)
+                                <!-- Voice Quality Section -->
+                                <div class="criteria-section mb-4">
+                                    <h6 class="mb-3">{{ $category['category_name'] }} ({{ $category['percentage'] }}%)</h6>
+                                    
+                                    @if(isset($category['main_criteria']))
+                                        @foreach($category['main_criteria'] as $mainId => $main)
+                                            <div class="row align-items-center mb-2">
+                                                <div class="col">
+                                                    <label class="form-label mb-0">
+                                                        {{ $main['name'] }} ({{ $main['percentage'] }}%)
+                                                    </label>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <input type="number" 
+                                                           class="form-control score-input" 
+                                                           style="width: 100px;"
+                                                           name="scores[{{ $categoryId }}][{{ $mainId }}]"
+                                                           min="0" 
+                                                           max="100" 
+                                                           step="0.1"
+                                                           data-weight="{{ $main['percentage'] }}"
+                                                           required>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
+
+                        <div class="border-top pt-3">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h5 class="mb-0">Total Score: <span class="total-score">0.00</span></h5>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-secondary me-2 clear-btn">Clear</button>
+                                    <button type="submit" class="btn btn-primary submit-btn">Submit Score</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    @else
+        <div class="alert alert-info">No contestants found for this event.</div>
+    @endif
 </div>
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    const debugInfo = $('#debugInfo');
-    const loadingIndicator = $('#loadingIndicator');
-    const contestantsSection = $('#contestantsSection');
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchContestants');
+    const contestantCards = document.querySelectorAll('.contestant-card');
 
-    function showLoading() {
-        loadingIndicator.show();
-        contestantsSection.hide();
-    }
-
-    function hideLoading() {
-        loadingIndicator.hide();
-        contestantsSection.show();
-    }
-
-    function showDebug(info) {
-        debugInfo.find('pre').text(JSON.stringify(info, null, 2));
-        debugInfo.show();
-    }
-
-    // Event selection handler
-    $('#eventSelect').change(function() {
-        const selectedEvent = $(this).val();
-        debugInfo.hide();
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
         
-        if (selectedEvent) {
-            loadContestants(selectedEvent);
-        } else {
-            contestantsSection.empty();
-        }
+        contestantCards.forEach(card => {
+            const contestantName = card.querySelector('h5').textContent.toLowerCase();
+            card.style.display = contestantName.includes(searchTerm) ? 'block' : 'none';
+        });
     });
 
-    function loadContestants(eventName) {
-        showLoading();
+    // Score calculation
+    document.querySelectorAll('.scoring-form').forEach(form => {
+        const inputs = form.querySelectorAll('.score-input');
+        const totalDisplay = form.querySelector('.total-score');
         
-        const url = `/judge/tabulation/contestants/${encodeURIComponent(eventName)}`;
-        console.log('Fetching contestants from:', url);
-
-        $.ajax({
-            url: url,
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                console.log('Received response:', response);
-                showDebug({
-                    eventName: eventName,
-                    response: response
-                });
-                displayContestants(response);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-                showDebug({
-                    error: error,
-                    status: status,
-                    response: xhr.responseText
-                });
-                contestantsSection.html(`
-                    <div class="alert alert-danger">
-                        Error loading contestants. Status: ${status}
-                        <br>
-                        Details: ${error}
-                    </div>
-                `);
-            },
-            complete: function() {
-                hideLoading();
-            }
-        });
-    }
-
-    function displayContestants(contestants) {
-        contestantsSection.empty();
-
-        if (!Array.isArray(contestants) || contestants.length === 0) {
-            contestantsSection.html(`
-                <div class="alert alert-info">
-                    No contestants found for this event.
-                </div>
-            `);
-            return;
-        }
-
-        const contestantGrid = $('<div class="row g-4"></div>');
-
-        contestants.forEach((contestant) => {
-            const contestantCard = `
-                <div class="col-md-6 col-lg-4">
-                    <div class="contestant-card" data-contestant-id="${contestant.id}">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    ${contestant.cfname || ''} ${contestant.clname || ''}
-                                </h5>
-                                <div class="card-text">
-                                    <p class="mb-1">
-                                        <strong>Number:</strong> ${contestant.cnumber || 'N/A'}
-                                    </p>
-                                    <p class="mb-1">
-                                        <strong>Category:</strong> ${contestant.category || 'N/A'}
-                                    </p>
-                                </div>
-                                <button class="btn btn-primary mt-3 score-button w-100">
-                                    Score Contestant
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            contestantGrid.append(contestantCard);
+        inputs.forEach(input => {
+            input.addEventListener('input', () => calculateTotal(form));
         });
 
-        contestantsSection.append(contestantGrid);
+        // Clear button
+        form.querySelector('.clear-btn').addEventListener('click', () => {
+            inputs.forEach(input => input.value = '');
+            calculateTotal(form);
+        });
 
-        // Add click handler for contestant cards
-        $('.score-button').click(function(e) {
+        // Submit form
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
-            const card = $(this).closest('.contestant-card');
-            const contestantId = card.data('contestant-id');
-            
-            // Remove active class from all cards
-            $('.contestant-card').removeClass('active');
-            // Add active class to selected card
-            card.addClass('active');
-            
-            // Show scoring section for selected contestant
-            $('.scoring-section').hide();
-            $(`#scoring-${contestantId}`).show();
+            submitScore(form);
         });
-    }
+    });
 });
+
+function calculateTotal(form) {
+    let total = 0;
+    form.querySelectorAll('.score-input').forEach(input => {
+        const score = parseFloat(input.value) || 0;
+        const weight = parseFloat(input.dataset.weight) / 100;
+        total += score * weight;
+    });
+    
+    form.querySelector('.total-score').textContent = total.toFixed(2);
+}
+
+function submitScore(form) {
+    const formData = new FormData(form);
+    
+    fetch('/judge/tabulation/save-score', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(Object.fromEntries(formData))
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Score saved successfully!');
+            form.querySelector('.clear-btn').click();
+        } else {
+            alert('Error saving score: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error saving score: ' + error.message);
+    });
+}
 </script>
 @endpush
-
-<style>
-/* Your existing styles plus these additions */
-.contestant-card {
-    transition: all 0.3s ease;
-}
-
-.contestant-card:hover {
-    transform: translateY(-5px);
-}
-
-.contestant-card.active .card {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 1px #0d6efd;
-}
-
-.spinner-border {
-    width: 3rem;
-    height: 3rem;
-}
-
-#loadingIndicator {
-    padding: 2rem;
-}
-
-.card {
-    height: 100%;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.score-button {
-    transition: all 0.2s ease;
-}
-
-.score-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
-}
-</style>
 @endsection

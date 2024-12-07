@@ -156,8 +156,9 @@
         <img class="home-logo" src="{{ asset('tabulaLOGO.png') }}" alt="Tabula Logo">
         <h3>Sign up</h3>
         
-        <form method="POST" action="{{ route('register') }}">
+        <form action="{{ route('register') }}" method="POST">
             @csrf
+            
             
             <div class="input_box">
                 <input type="text" name="full_name" placeholder="Full Name" required value="{{ old('full_name') }}" />
