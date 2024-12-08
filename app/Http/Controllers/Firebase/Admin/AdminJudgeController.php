@@ -58,23 +58,66 @@ class AdminJudgeController extends Controller
         return implode('', $password);
     }
 
-    public function list()
+    public function list(Request $request)
     {
-        $judges = $this->database->getReference($this->tablename)->getValue();
-        $events = $this->database->getReference('events')->getValue();
+        // Get all events for filtering
+        $events = $this->database->getReference('events')->getValue() ?? [];
         
-        // Modify the judges array to include event names
-        if ($judges) {
-            foreach ($judges as $key => $judge) {
-                if (isset($judge['event_name']) && isset($events[$judge['event_name']])) {
-                    $judges[$key]['event_name'] = $events[$judge['event_name']]['ename'];
-                } else {
-                    $judges[$key]['event_name'] = 'N/A';
-                }
+        // Create event name map
+        $eventMap = [];
+        foreach ($events as $eventId => $event) {
+            if (isset($event['ename'])) {
+                $eventMap[$event['ename']] = $event['ename'];
             }
         }
+
+        // Get all judges
+        $judges = $this->database->getReference($this->tablename)->getValue() ?? [];
         
-        return view('firebase.admin.judge.judge-list', compact('judges'));
+        // Convert to collection for easier manipulation
+        $judges = collect($judges)->map(function($item, $key) use ($eventMap) {
+            $judge = array_merge(['id' => $key], $item);
+            
+            // Ensure event name is set
+            if (isset($judge['event_name']) && isset($eventMap[$judge['event_name']])) {
+                $judge['event_name'] = $eventMap[$judge['event_name']];
+            } else {
+                $judge['event_name'] = 'No Event Assigned';
+            }
+            
+            return $judge;
+        });
+
+        // Filter by selected event if specified
+        if ($request->has('event_filter') && $request->event_filter !== 'all') {
+            $judges = $judges->filter(function($judge) use ($request) {
+                return isset($judge['event_name']) && $judge['event_name'] === $request->event_filter;
+            });
+        }
+
+        // Search functionality
+        if ($request->has('search')) {
+            $searchTerm = strtolower($request->search);
+            $judges = $judges->filter(function($judge) use ($searchTerm) {
+                $fullName = strtolower(
+                    ($judge['jfname'] ?? '') . ' ' . 
+                    ($judge['jmname'] ?? '') . ' ' . 
+                    ($judge['jlname'] ?? '')
+                );
+                $username = strtolower($judge['jusername'] ?? '');
+                return str_contains($fullName, $searchTerm) || str_contains($username, $searchTerm);
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort', 'newest');
+        if ($sortBy === 'newest') {
+            $judges = $judges->sortByDesc('id');
+        } else {
+            $judges = $judges->sortBy('id');
+        }
+
+        return view('firebase.admin.judge.judge-list', compact('judges', 'events'));
     }
 
     public function create()

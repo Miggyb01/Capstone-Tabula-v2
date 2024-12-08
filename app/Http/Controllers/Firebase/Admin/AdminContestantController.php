@@ -5,29 +5,84 @@ namespace App\Http\Controllers\Firebase\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
-use function PHPUnit\Framework\returnValueMap;
 
 class AdminContestantController extends Controller
 {
     protected $database, $tablename;
+    
     public function __construct(Database $database)
     {
         $this->database = $database;
         $this->tablename = 'contestants';
     }
-    public function list()
-    {
-        $contestants = $this->database->getReference($this->tablename)->getValue();
-        #$total_events = $reference = $this->database->getReference($this->tablename)->getSnapshot()->numChildren();
-        return view('firebase.admin.contestant.contestant-list', compact('contestants'));
-    }
+
     public function create()
     {
-        $events = $this->database->getReference('events')->getValue();
-
+        // Get all events for the dropdown
+        $events = $this->database->getReference('events')->getValue() ?? [];
         return view('firebase.admin.contestant.contestant-setup', compact('events'));
     }
 
+    public function list(Request $request)
+    {
+        // Get all events first
+        $events = $this->database->getReference('events')->getValue() ?? [];
+        
+        // Create a map of event IDs to event names for easier lookup
+        $eventMap = [];
+        foreach ($events as $eventId => $event) {
+            if (isset($event['ename'])) {
+                $eventMap[$event['ename']] = $event['ename'];
+            }
+        }
+
+        // Get all contestants
+        $contestants = $this->database->getReference($this->tablename)->getValue() ?? [];
+        
+        // Convert to collection for easier manipulation and add event names
+        $contestants = collect($contestants)->map(function($item, $key) use ($eventMap) {
+            $contestant = array_merge(['id' => $key], $item);
+            
+            // Ensure event name is set
+            if (isset($contestant['ename']) && isset($eventMap[$contestant['ename']])) {
+                $contestant['event_name'] = $eventMap[$contestant['ename']];
+            } else {
+                $contestant['event_name'] = 'No Event Assigned';
+            }
+            
+            return $contestant;
+        });
+
+        // Filter by selected event if specified
+        if ($request->has('event_filter') && $request->event_filter !== 'all') {
+            $contestants = $contestants->filter(function($contestant) use ($request) {
+                return isset($contestant['ename']) && $contestant['ename'] === $request->event_filter;
+            });
+        }
+
+        // Search functionality
+        if ($request->has('search')) {
+            $searchTerm = strtolower($request->search);
+            $contestants = $contestants->filter(function($contestant) use ($searchTerm) {
+                $fullName = strtolower(
+                    ($contestant['cfname'] ?? '') . ' ' . 
+                    ($contestant['cmname'] ?? '') . ' ' . 
+                    ($contestant['clname'] ?? '')
+                );
+                return str_contains($fullName, $searchTerm);
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort', 'newest');
+        if ($sortBy === 'newest') {
+            $contestants = $contestants->sortByDesc('id');
+        } else {
+            $contestants = $contestants->sortBy('id');
+        }
+
+        return view('firebase.admin.contestant.contestant-list', compact('contestants', 'events'));
+    }
     public function store(Request $request)
     {
         $postData = [

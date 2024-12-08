@@ -5,10 +5,6 @@ namespace App\Http\Controllers\Firebase\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
-
-
 
 class AdminCriteriaController extends Controller
 {
@@ -20,10 +16,10 @@ class AdminCriteriaController extends Controller
         $this->tablename = 'criterias';
     }
 
-    public function list()
+    public function list(Request $request)
     {
         // Fetching data from Firebase
-        $criterias = $this->database->getReference($this->tablename)->getValue();
+        $criterias = $this->database->getReference($this->tablename)->getValue() ?? [];
         
         $criteriaList = [];
         
@@ -36,6 +32,7 @@ class AdminCriteriaController extends Controller
                 }
 
                 $criteriaList[$criteriaId] = [
+                    'id' => $criteriaId,
                     'event_name' => $criteriaData['ename'],
                     'categories' => [],
                 ];
@@ -83,17 +80,37 @@ class AdminCriteriaController extends Controller
                 }
             }
         }
-       
+
+        // Convert to collection for search and sort
+        $criteriaCollection = collect($criteriaList);
+
+        // Search functionality
+        if ($request->has('search')) {
+            $searchTerm = strtolower($request->search);
+            $criteriaCollection = $criteriaCollection->filter(function($criteria) use ($searchTerm) {
+                return str_contains(strtolower($criteria['event_name']), $searchTerm);
+            });
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort', 'newest');
+        if ($sortBy === 'newest') {
+            $criteriaCollection = $criteriaCollection->sortByDesc('id');
+        } else {
+            $criteriaCollection = $criteriaCollection->sortBy('id');
+        }
+
+        // Convert back to array and reassign to criteriaList
+        $criteriaList = $criteriaCollection->all();
+
         return view('firebase.admin.criteria.criteria-list', compact('criteriaList'));
     }
+
     public function create()
     {
-        // Fetching events from Firebase
-        $events = $this->database->getReference('events')->getValue();
+        $events = $this->database->getReference('events')->getValue() ?? [];
         return view('firebase.admin.criteria.criteria-setup', compact('events'));
     }
-
-
 
     public function store(Request $request)
     {
@@ -114,11 +131,9 @@ class AdminCriteriaController extends Controller
     
         $criteriaId = $criteriaReference->getKey();
         
-        // For each category
         foreach ($validatedData['category_name'] as $catIndex => $categoryName) {
             $categoryReference = $this->database->getReference("{$this->tablename}/{$criteriaId}/categories");
             
-            // Create category entry
             $categoryData = [
                 'category_name' => $categoryName,
                 'criteria_details' => $validatedData['criteria_details'][$catIndex],
@@ -126,16 +141,13 @@ class AdminCriteriaController extends Controller
             
             $categoryId = $categoryReference->push($categoryData)->getKey();
             
-            // Get main criteria for this category
             $mainCriteriaArray = $validatedData['main_criteria'][$catIndex] ?? [];
             $mainCriteriaPercentages = $validatedData['main_criteria_percentage'][$catIndex] ?? [];
             
-            // Reference for main criteria
             $mainCriteriaReference = $this->database->getReference(
                 "{$this->tablename}/{$criteriaId}/categories/{$categoryId}/main_criteria"
             );
     
-            // Process each main criteria
             foreach ($mainCriteriaArray as $mainIndex => $mainCriteriaName) {
                 if (empty($mainCriteriaName)) continue;
     
@@ -144,7 +156,6 @@ class AdminCriteriaController extends Controller
                     'percentage' => $mainCriteriaPercentages[$mainIndex] ?? 0,
                 ];
     
-                // Handle sub-criteria
                 if (isset($validatedData['sub_criteria'][$catIndex][$mainIndex]) && 
                     is_array($validatedData['sub_criteria'][$catIndex][$mainIndex])) {
                     
@@ -161,133 +172,139 @@ class AdminCriteriaController extends Controller
                         }
                     }
                     
-                    if (!empty($subCriteria)) { 
+                    if (!empty($subCriteria)) {
                         $mainCriteriaData['sub_criteria'] = $subCriteria;
                     }
                 }
     
-                // Push main criteria with its sub-criteria
                 $mainCriteriaReference->push($mainCriteriaData);
             }
         }
 
         return redirect()->route('admin.criteria.list')->with('success', 'Criteria setup successfully created');
-    
     }
 
     public function edit($id)
-{
-    $editdata = $this->database->getReference($this->tablename)->getChild($id)->getValue();
-    if ($editdata) {
-        $criteria = [
-            'id' => $id,
-            'event_name' => $editdata['ename'],
-            'categories' => []
-        ];
+    {
+        $editdata = $this->database->getReference($this->tablename)->getChild($id)->getValue();
+        if ($editdata) {
+            $criteria = [
+                'id' => $id,
+                'event_name' => $editdata['ename'],
+                'categories' => []
+            ];
 
-        if (isset($editdata['categories'])) {
-            foreach ($editdata['categories'] as $categoryId => $categoryData) {
-                $category = [
-                    'id' => $categoryId,
-                    'category_name' => $categoryData['category_name'] ?? '',
-                    'criteria_details' => $categoryData['criteria_details'] ?? '',
-                    'main_criteria' => []
-                ];
+            if (isset($editdata['categories'])) {
+                foreach ($editdata['categories'] as $categoryId => $categoryData) {
+                    $category = [
+                        'id' => $categoryId,
+                        'category_name' => $categoryData['category_name'] ?? '',
+                        'criteria_details' => $categoryData['criteria_details'] ?? '',
+                        'main_criteria' => []
+                    ];
 
-                if (isset($categoryData['main_criteria'])) {
-                    foreach ($categoryData['main_criteria'] as $mainCriteriaId => $mainCriteriaData) {
-                        $mainCriteria = [
-                            'id' => $mainCriteriaId,
-                            'name' => $mainCriteriaData['name'] ?? '',
-                            'percentage' => $mainCriteriaData['percentage'] ?? 0,
-                            'sub_criteria' => []
-                        ];
+                    if (isset($categoryData['main_criteria'])) {
+                        foreach ($categoryData['main_criteria'] as $mainCriteriaId => $mainCriteriaData) {
+                            $mainCriteria = [
+                                'id' => $mainCriteriaId,
+                                'name' => $mainCriteriaData['name'] ?? '',
+                                'percentage' => $mainCriteriaData['percentage'] ?? 0,
+                                'sub_criteria' => []
+                            ];
 
-                        if (isset($mainCriteriaData['sub_criteria'])) {
-                            foreach ($mainCriteriaData['sub_criteria'] as $subCriteriaId => $subCriteriaData) {
-                                $mainCriteria['sub_criteria'][] = [
-                                    'id' => $subCriteriaId,
-                                    'name' => $subCriteriaData['name'] ?? '',
-                                    'percentage' => $subCriteriaData['percentage'] ?? 0
-                                ];
+                            if (isset($mainCriteriaData['sub_criteria'])) {
+                                foreach ($mainCriteriaData['sub_criteria'] as $subCriteriaId => $subCriteriaData) {
+                                    $mainCriteria['sub_criteria'][] = [
+                                        'id' => $subCriteriaId,
+                                        'name' => $subCriteriaData['name'] ?? '',
+                                        'percentage' => $subCriteriaData['percentage'] ?? 0
+                                    ];
+                                }
                             }
+                            
+                            $category['main_criteria'][] = $mainCriteria;
                         }
-                        
-                        $category['main_criteria'][] = $mainCriteria;
                     }
+                    
+                    $criteria['categories'][] = $category;
                 }
-                
-                $criteria['categories'][] = $category;
             }
+
+            $events = $this->database->getReference('events')->getValue();
+            return view('firebase.admin.criteria.criteria-edit', compact('criteria', 'events'));
         }
-
-        $events = $this->database->getReference('events')->getValue();
-        return view('firebase.admin.criteria.criteria-edit', compact('criteria', 'events'));
+        return redirect()->route('admin.criteria.list')->with('status', 'Criteria not found');
     }
-    return redirect()->route('admin.criteria.list')->with('status', 'Criteria not found');
-}
 
-public function update(Request $request, $id)
-{
-    try {
-        $updateData = [
-            'ename' => $request->input('event_name'),
-            'categories' => []
-        ];
+    public function update(Request $request, $id)
+    {
+        try {
+            $updateData = [
+                'ename' => $request->input('event_name'),
+                'categories' => []
+            ];
 
-        if ($request->has('categories')) {
-            foreach ($request->input('categories') as $categoryIndex => $category) {
-                $categoryId = $category['id'];
-                
-                $categoryData = [
-                    'category_name' => $category['category_name'],
-                    'criteria_details' => $category['criteria_details'],
-                    'main_criteria' => []
-                ];
+            if ($request->has('categories')) {
+                foreach ($request->input('categories') as $categoryIndex => $category) {
+                    $categoryId = $category['id'];
+                    
+                    $categoryData = [
+                        'category_name' => $category['category_name'],
+                        'criteria_details' => $category['criteria_details'],
+                        'main_criteria' => []
+                    ];
 
-                // Process main criteria
-                if (isset($category['main_criteria'])) {
-                    foreach ($category['main_criteria'] as $mainCriteria) {
-                        $mainCriteriaId = $mainCriteria['id'];
-                        $mainCriteriaData = [
-                            'name' => $mainCriteria['name'],
-                            'percentage' => $mainCriteria['percentage'],
-                            'sub_criteria' => []
-                        ];
+                    if (isset($category['main_criteria'])) {
+                        foreach ($category['main_criteria'] as $mainCriteria) {
+                            $mainCriteriaId = $mainCriteria['id'];
+                            $mainCriteriaData = [
+                                'name' => $mainCriteria['name'],
+                                'percentage' => $mainCriteria['percentage'],
+                                'sub_criteria' => []
+                            ];
 
-                        // Process sub criteria
-                        if (isset($mainCriteria['sub_criteria'])) {
-                            foreach ($mainCriteria['sub_criteria'] as $subCriteria) {
-                                $subCriteriaId = $subCriteria['id'];
-                                $mainCriteriaData['sub_criteria'][$subCriteriaId] = [
-                                    'name' => $subCriteria['name'],
-                                    'percentage' => $subCriteria['percentage']
-                                ];
+                            if (isset($mainCriteria['sub_criteria'])) {
+                                foreach ($mainCriteria['sub_criteria'] as $subCriteria) {
+                                    $subCriteriaId = $subCriteria['id'];
+                                    $mainCriteriaData['sub_criteria'][$subCriteriaId] = [
+                                        'name' => $subCriteria['name'],
+                                        'percentage' => $subCriteria['percentage']
+                                    ];
+                                }
                             }
+
+                            $categoryData['main_criteria'][$mainCriteriaId] = $mainCriteriaData;
                         }
-
-                        $categoryData['main_criteria'][$mainCriteriaId] = $mainCriteriaData;
                     }
+
+                    $updateData['categories'][$categoryId] = $categoryData;
                 }
-
-                $updateData['categories'][$categoryId] = $categoryData;
             }
-        }
 
-        $res_update = $this->database->getReference($this->tablename . '/' . $id)->update($updateData);
+            $res_update = $this->database->getReference($this->tablename . '/' . $id)->update($updateData);
 
-        if ($res_update) {
+            if ($res_update) {
+                return redirect()->route('admin.criteria.list')
+                    ->with('success', 'Criteria updated successfully');
+            } else {
+                return redirect()->route('admin.criteria.list')
+                    ->with('error', 'Failed to update criteria');
+            }
+        } catch (\Exception $e) {
             return redirect()->route('admin.criteria.list')
-                ->with('success', 'Criteria updated successfully');
-        } else {
-            return redirect()->route('admin.criteria.list')
-                ->with('error', 'Failed to update criteria');
+                ->with('error', 'Error updating criteria: ' . $e->getMessage());
         }
-    } catch (\Exception $e) {
-        return redirect()->route('admin.criteria.list')
-            ->with('error', 'Error updating criteria: ' . $e->getMessage());
     }
-}
 
-
+    public function destroy($id)
+    {
+        try {
+            $this->database->getReference($this->tablename . '/' . $id)->remove();
+            return redirect()->route('admin.criteria.list')
+                ->with('success', 'Criteria deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->route('admin.criteria.list')
+                ->with('error', 'Error deleting criteria: ' . $e->getMessage());
+        }
+    }
 }

@@ -28,13 +28,13 @@
     </div>
     <div class="col-md-6 text-end">
     <div class="btn-group-eventSort">
-        <a href="{{ route('admin.event.list', array_merge(['sort' => 'oldest'], request()->except('sort'))) }}" 
-           class="btn btn-outline-primary btn-sm {{ request('sort') === 'oldest' ? 'active' : '' }}">
-            Oldest First
-        </a>
         <a href="{{ route('admin.event.list', array_merge(['sort' => 'newest'], request()->except('sort'))) }}" 
            class="btn btn-outline-primary btn-sm {{ request('sort', 'newest') === 'newest' ? 'active' : '' }}">
             Newest First
+        </a>
+        <a href="{{ route('admin.event.list', array_merge(['sort' => 'oldest'], request()->except('sort'))) }}" 
+           class="btn btn-outline-primary btn-sm {{ request('sort') === 'oldest' ? 'active' : '' }}">
+            Oldest First
         </a>
     </div>
 </div>

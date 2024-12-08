@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Firebase\Judge;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
+use Illuminate\Support\Facades\Session;
 
 class JudgeTabulationController extends Controller
 {
@@ -19,14 +20,10 @@ class JudgeTabulationController extends Controller
     public function index()
     {
 
-        
-        return view('firebase.judge.judge-tabulation'); 
-        
-
         try {
             
             // Get the logged-in judge's event
-            $judgeId = session('user.uid');
+            $judgeId = session::get('user.uid');
             $judge = $this->database->getReference('judges/' . $judgeId)->getValue();
             $eventId = $judge['event_id'] ?? null;
 
@@ -43,9 +40,9 @@ class JudgeTabulationController extends Controller
                 ->equalTo($event['ename'])
                 ->getValue();
 
-            dd($event, $contestants, $criteria);
+            dd($event, $contestants, $criterias);
             // Get criteria for this event
-            $criteria = $this->database->getReference('criterias')
+            $criterias = $this->database->getReference('criterias')
                 ->orderByChild('ename')
                 ->equalTo($event['ename'])
                 ->getValue();
@@ -53,12 +50,14 @@ class JudgeTabulationController extends Controller
             return view('firebase.judge.judge-tabulation', [
                 'event' => $event,
                 'contestants' => $contestants,
-                'criteria' => $criteria ? reset($criteria) : null // Get first criteria set
+                'criterias' => $criteria ? reset($criterias) : null // Get first criteria set
             ]);
 
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+
+        return view('firebase.judge.judge-tabulation'); 
     }
 
     public function saveScore(Request $request)
