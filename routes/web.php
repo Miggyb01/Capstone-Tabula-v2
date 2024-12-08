@@ -176,11 +176,9 @@ Route::prefix('judge')->name('judge.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [JudgeEventController::class, 'dashboard'])->name('dashboard');
     
-    // Tabulation Routes
-    Route::prefix('tabulation')->group(function () {
-        Route::get('/', [JudgeTabulationController::class, 'index'])->name('index');
-        Route::post('/save-score', [JudgeTabulationController::class, 'saveScore'])->name('save-score');
-    });
+    Route::get('/tabulation', [JudgeTabulationController::class, 'index'])->name('tabulation');
+    
+    Route::post('/tabulation/save-score', [JudgeTabulationController::class, 'saveScore'])->name('tabulation.save-score');
     
     // Make tabulation accessible directly as well
     Route::get('/tabulation', [JudgeTabulationController::class, 'index'])->name('tabulation');

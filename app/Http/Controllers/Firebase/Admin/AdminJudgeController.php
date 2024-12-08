@@ -60,29 +60,21 @@ class AdminJudgeController extends Controller
 
     public function list(Request $request)
     {
-        // Get all events for filtering
+        // Get all events first
         $events = $this->database->getReference('events')->getValue() ?? [];
         
-        // Create event name map
-        $eventMap = [];
-        foreach ($events as $eventId => $event) {
-            if (isset($event['ename'])) {
-                $eventMap[$event['ename']] = $event['ename'];
-            }
-        }
-
         // Get all judges
         $judges = $this->database->getReference($this->tablename)->getValue() ?? [];
         
         // Convert to collection for easier manipulation
-        $judges = collect($judges)->map(function($item, $key) use ($eventMap) {
+        $judges = collect($judges)->map(function($item, $key) use ($events) {
             $judge = array_merge(['id' => $key], $item);
             
-            // Ensure event name is set
-            if (isset($judge['event_name']) && isset($eventMap[$judge['event_name']])) {
-                $judge['event_name'] = $eventMap[$judge['event_name']];
+            // Get event name from events table
+            if (isset($item['event_name'])) {
+                $judge['event_display'] = $item['event_name'];
             } else {
-                $judge['event_name'] = 'No Event Assigned';
+                $judge['event_display'] = 'No Event Assigned';
             }
             
             return $judge;
@@ -91,7 +83,7 @@ class AdminJudgeController extends Controller
         // Filter by selected event if specified
         if ($request->has('event_filter') && $request->event_filter !== 'all') {
             $judges = $judges->filter(function($judge) use ($request) {
-                return isset($judge['event_name']) && $judge['event_name'] === $request->event_filter;
+                return $judge['event_display'] === $request->event_filter;
             });
         }
 
@@ -129,12 +121,19 @@ class AdminJudgeController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'event_name' => 'required',
+            'Judge_firstname' => 'required',
+            'Judge_middlename' => 'required',
+            'Judge_lastname' => 'required',
+            'Judge_achievement' => 'required',
+        ]);
+
         $username = $this->generateUsername($request->Judge_firstname, $request->Judge_lastname);
         $password = $this->generatePassword(8);
 
         $postData = [
-            'event_name' => $request->event_name,
-            'event_id' => $request->event_name,
+            'event_name' => $request->event_name,  // Store the actual event name
             'jfname' => $request->Judge_firstname,
             'jmname' => $request->Judge_middlename,
             'jlname' => $request->Judge_lastname,

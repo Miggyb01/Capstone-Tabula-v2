@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Firebase\Judge;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
-use Illuminate\Support\Facades\Session;
 
 class JudgeTabulationController extends Controller
 {
@@ -14,71 +13,119 @@ class JudgeTabulationController extends Controller
     public function __construct(Database $database)
     {
         $this->database = $database;
-        
     }
 
     public function index()
     {
-
-        try {
-            
-            // Get the logged-in judge's event
-            $judgeId = session::get('user.uid');
-            $judge = $this->database->getReference('judges/' . $judgeId)->getValue();
-            $eventId = $judge['event_id'] ?? null;
-
-            if (!$eventId) {
-                return redirect()->back()->with('error', 'No event assigned');
-            }
-
-            // Get event details
-            $event = $this->database->getReference('events/' . $eventId)->getValue();
-
-            // Get contestants for this event
-            $contestants = $this->database->getReference('contestants')
-                ->orderByChild('event_name')
-                ->equalTo($event['ename'])
-                ->getValue();
-
-            dd($event, $contestants, $criterias);
-            // Get criteria for this event
-            $criterias = $this->database->getReference('criterias')
-                ->orderByChild('ename')
-                ->equalTo($event['ename'])
-                ->getValue();
-
-            return view('firebase.judge.judge-tabulation', [
-                'event' => $event,
-                'contestants' => $contestants,
-                'criterias' => $criteria ? reset($criterias) : null // Get first criteria set
-            ]);
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+        // Get the current judge's event from session
+        $judgeEventName = session('user.event_name');
+        
+        if (!$judgeEventName) {
+            return response()->json(['error' => 'No event assigned'], 400);
         }
 
-        return view('firebase.judge.judge-tabulation'); 
+        // Get event criteria
+        $criteria = $this->getEventCriteria($judgeEventName);
+        
+        // Get contestants for the event
+        $contestants = $this->getEventContestants($judgeEventName);
+
+        return view('firebase.judge.judge-tabulation', [
+            'eventName' => $judgeEventName,
+            'criteria' => $criteria,
+            'contestants' => $contestants
+        ]);
+    }
+
+    protected function getEventCriteria($eventName)
+    {
+        $criteriaRef = $this->database->getReference('criterias');
+        $criteria = $criteriaRef->orderByChild('ename')
+                              ->equalTo($eventName)
+                              ->getValue();
+
+        if (!$criteria) {
+            return null;
+        }
+
+        // Transform criteria data for easier use in the view
+        $transformedCriteria = [];
+        foreach ($criteria as $key => $criteriaData) {
+            if (isset($criteriaData['categories'])) {
+                foreach ($criteriaData['categories'] as $category) {
+                    $mainCriteria = [];
+                    if (isset($category['main_criteria'])) {
+                        foreach ($category['main_criteria'] as $main) {
+                            $subCriteria = [];
+                            if (isset($main['sub_criteria'])) {
+                                foreach ($main['sub_criteria'] as $sub) {
+                                    $subCriteria[] = [
+                                        'name' => $sub['name'],
+                                        'percentage' => $sub['percentage']
+                                    ];
+                                }
+                            }
+                            $mainCriteria[] = [
+                                'name' => $main['name'],
+                                'percentage' => $main['percentage'],
+                                'sub_criteria' => $subCriteria
+                            ];
+                        }
+                    }
+                    $transformedCriteria[$category['category_name']] = $mainCriteria;
+                }
+            }
+        }
+
+        return $transformedCriteria;
+    }
+
+    protected function getEventContestants($eventName)
+    {
+        $contestantsRef = $this->database->getReference('contestants');
+        $contestants = $contestantsRef->orderByChild('ename')
+                                    ->equalTo($eventName)
+                                    ->getValue();
+
+        if (!$contestants) {
+            return [];
+        }
+
+        // Transform contestants data
+        $transformedContestants = [];
+        foreach ($contestants as $key => $contestant) {
+            $transformedContestants[] = [
+                'id' => $key,
+                'number' => $key, // You might want to add a specific number field in your database
+                'name' => $contestant['cfname'] . ' ' . $contestant['cmname'] . ' ' . $contestant['clname'],
+                'category' => $contestant['category'] ?? 'Default Category'
+            ];
+        }
+
+        return $transformedContestants;
     }
 
     public function saveScore(Request $request)
     {
-        try {
-            $judgeId = session('user.uid');
-            
-            $scoreData = [
-                'event_id' => $request->event_id,
-                'contestant_id' => $request->contestant_id,
-                'judge_id' => $judgeId,
-                'scores' => $request->scores,
-                'total_score' => $request->total_score,
-                'timestamp' => ['.sv' => 'timestamp']
-            ];
+        $request->validate([
+            'contestant_id' => 'required',
+            'scores' => 'required|array'
+        ]);
 
-            $this->database->getReference('scores')->push($scoreData);
-            
-            return response()->json(['success' => true, 'message' => 'Score saved successfully']);
+        $judgeId = session('user.id');
+        $eventName = session('user.event_name');
+
+        try {
+            $scoreRef = $this->database->getReference("scores/{$eventName}/{$request->contestant_id}/{$judgeId}");
+            $scoreRef->set([
+                'scores' => $request->scores,
+                'timestamp' => ['.sv' => 'timestamp'],
+                'judge_id' => $judgeId
+            ]);
+
+            return response()->json(['message' => 'Score saved successfully']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to save score'], 500);
         }
     }
 }

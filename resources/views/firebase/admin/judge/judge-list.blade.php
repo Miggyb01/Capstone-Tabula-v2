@@ -89,10 +89,10 @@
                 @forelse ($judges as $judge)
                 <tr>
                     <td>{{ $i++ }}</td>
-                    <td>{{ $judge['jfname'] ?? '' }} {{ $judge['jmname'] ?? '' }} {{ $judge['jlname'] ?? '' }}</td>
-                    <td>{{ $judge['jusername'] ?? 'N/A' }}</td>
+                    <td>{{ $judge['jfname'] }} {{ $judge['jmname'] }} {{ $judge['jlname'] }}</td>
+                    <td>{{ $judge['jusername'] }}</td>
                     <td>••••••••</td>
-                    <td>{{ $judge['event_name'] }}</td>
+                    <td>{{ $judge['event_display'] }}</td>
                     <td>{{ $judge['status'] ?? 'Active' }}</td>
                     <td>
                         <div class="btn-group" role="group">
@@ -100,8 +100,8 @@
                                 <i class="ri-edit-box-line"></i> Edit
                             </a>
                             <a href="{{ route('admin.judge.delete', $judge['id']) }}" 
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Are you sure you want to delete this judge?')">
+                            class="btn btn-danger btn-sm"
+                            onclick="return confirm('Are you sure you want to delete this judge?')">
                                 <i class="ri-delete-bin-line"></i> Delete
                             </a>
                         </div>
