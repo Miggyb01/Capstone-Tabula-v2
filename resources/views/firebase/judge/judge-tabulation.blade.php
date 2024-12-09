@@ -1,131 +1,161 @@
 @extends('firebase.layouts.judge-app')
 
-@section('styles')
+
 <style>
     .scoring-container {
         padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
+        background: #fff;
     }
 
     .search-container {
-        position: relative;
-        margin-bottom: 20px;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
+        margin-bottom: 30px;
     }
 
     .search-input {
-        padding-left: 35px;
-        height: 40px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px 12px;
+        width: 300px;
     }
 
     .contestant-card {
         background: white;
+        border: 1px solid #e0e0e0;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        overflow: hidden;
+        margin-bottom: 30px;
+        padding: 20px;
     }
 
     .contestant-header {
-        padding: 15px 20px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
     }
 
-    .contestant-info {
+    .contestant-info h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .contestant-number {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .contestant-category {
+        background: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .criteria-section {
+        margin-bottom: 25px;
+    }
+
+    .criteria-title {
+        font-weight: 600;
+        margin-bottom: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    .scoring-section {
-        padding: 20px;
-    }
-
-    .criteria-group {
-        margin-bottom: 25px;
-    }
-
-    .criteria-header {
-        font-weight: 600;
-        margin-bottom: 15px;
-        color: #495057;
+    .criteria-weight {
+        color: #666;
+        font-size: 0.9rem;
     }
 
     .subcriteria-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
-        padding: 8px;
-        background: #f8f9fa;
-        border-radius: 4px;
+        margin-bottom: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .subcriteria-label {
+        flex: 1;
+        font-size: 0.95rem;
+    }
+
+    .subcriteria-weight {
+        color: #666;
+        margin-left: 5px;
+        font-size: 0.85rem;
     }
 
     .score-input {
-        width: 100px;
+        width: 80px;
         text-align: center;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-left: 15px;
+    }
+
+    .score-input:focus {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
     }
 
     .total-score {
-        font-size: 24px;
+        text-align: right;
+        padding-top: 20px;
+        margin-top: 20px;
+        border-top: 2px solid #eee;
+    }
+
+    .total-score-label {
+        font-weight: 600;
+        margin-right: 15px;
+    }
+
+    .total-score-value {
+        font-size: 1.5rem;
         font-weight: bold;
         color: #0d6efd;
     }
 
-    .save-button {
-        margin-top: 15px;
-        width: 100%;
+    .action-buttons {
+        margin-top: 20px;
+        text-align: right;
     }
 
-    .score-error {
-        color: #dc3545;
-        font-size: 0.875rem;
-        margin-top: 4px;
+    .btn-save {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 4px;
+        cursor: pointer;
     }
 
-    /* Loading spinner */
-    .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-right: 8px;
+    .btn-save:hover {
+        background: #0b5ed7;
     }
 
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    /* Loading state styles */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
     }
 </style>
-@endsection
+
 
 @section('content')
 <div class="scoring-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Event Scoring: {{ $eventName }}</h2>
-        <div id="saveStatus" class="text-success"></div>
-    </div>
-
     <div class="search-container">
-        <i class="ri-search-line search-icon"></i>
-        <input 
-            type="text" 
-            id="contestantSearch" 
-            class="form-control search-input" 
-            placeholder="Search contestants by name or number..."
-        >
+        <input type="text" 
+               class="search-input" 
+               placeholder="Search contestants..." 
+               id="contestantSearch">
     </div>
 
     <div id="contestantsList">
@@ -133,66 +163,122 @@
         <div class="contestant-card" data-contestant-id="{{ $contestant['id'] }}">
             <div class="contestant-header">
                 <div class="contestant-info">
-                    <div>
-                        <h4 class="mb-1">{{ $contestant['name'] }}</h4>
-                        <small class="text-muted">Number: {{ $contestant['number'] }} | {{ $contestant['category'] }}</small>
+                    <h3>{{ $contestant['name'] }}</h3>
+                    <span class="contestant-number">Number: {{ $contestant['number'] }}</span>
+                </div>
+                <span class="contestant-category">{{ $contestant['category'] }}</span>
+            </div>
+
+            <form id="scoringForm_{{ $contestant['id'] }}" class="scoring-form">
+                @csrf
+                <input type="hidden" name="contestant_id" value="{{ $contestant['id'] }}">
+
+                <!-- Voice Quality Section -->
+                <div class="criteria-section">
+                    <div class="criteria-title">
+                        <span>Voice Quality</span>
+                        <span class="criteria-weight">(40%)</span>
                     </div>
-                    <div class="text-end">
-                        <div class="total-score" id="totalScore_{{ $contestant['id'] }}">0.00</div>
-                        <small class="text-muted">Total Score</small>
+                    
+                    <div class="subcriteria-group">
+                        <div class="subcriteria-row">
+                            <span class="subcriteria-label">
+                                Pitch Accuracy
+                                <span class="subcriteria-weight">(15%)</span>
+                            </span>
+                            <input type="number" 
+                                   class="score-input score-field" 
+                                   name="scores[voice_quality][pitch]"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01" 
+                                   required>
+                        </div>
+                        
+                        <div class="subcriteria-row">
+                            <span class="subcriteria-label">
+                                Tone Quality
+                                <span class="subcriteria-weight">(15%)</span>
+                            </span>
+                            <input type="number" 
+                                   class="score-input score-field" 
+                                   name="scores[voice_quality][tone]"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01" 
+                                   required>
+                        </div>
+
+                        <div class="subcriteria-row">
+                            <span class="subcriteria-label">
+                                Breath Control
+                                <span class="subcriteria-weight">(10%)</span>
+                            </span>
+                            <input type="number" 
+                                   class="score-input score-field" 
+                                   name="scores[voice_quality][breath]"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01" 
+                                   required>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="scoring-section">
-                <form id="scoringForm_{{ $contestant['id'] }}" class="scoring-form">
-                    @csrf
-                    <input type="hidden" name="contestant_id" value="{{ $contestant['id'] }}">
-                    
-                    @foreach($criteria as $categoryName => $mainCriterias)
-                    <div class="criteria-group">
-                        <div class="criteria-header">{{ $categoryName }}</div>
-                        
-                        @foreach($mainCriterias as $mainCriteria)
-                        <div class="main-criteria-section mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="mb-0">{{ $mainCriteria['name'] }} ({{ $mainCriteria['percentage'] }}%)</h6>
-                            </div>
-
-                            @foreach($mainCriteria['sub_criteria'] as $subCriteria)
-                            <div class="subcriteria-row">
-                                <label class="mb-0">
-                                    {{ $subCriteria['name'] }}
-                                    <small class="text-muted">({{ $subCriteria['percentage'] }}%)</small>
-                                </label>
-                                <input 
-                                    type="number" 
-                                    class="form-control score-input score-field"
-                                    name="scores[{{ $categoryName }}][{{ $mainCriteria['name'] }}][{{ $subCriteria['name'] }}]"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    data-weight="{{ $subCriteria['percentage'] }}"
-                                    data-contestant="{{ $contestant['id'] }}"
-                                    required
-                                >
-                            </div>
-                            @endforeach
-                        </div>
-                        @endforeach
+                <!-- Performance Section -->
+                <div class="criteria-section">
+                    <div class="criteria-title">
+                        <span>Performance</span>
+                        <span class="criteria-weight">(30%)</span>
                     </div>
-                    @endforeach
+                    
+                    <div class="subcriteria-group">
+                        <div class="subcriteria-row">
+                            <span class="subcriteria-label">
+                                Stage Presence
+                                <span class="subcriteria-weight">(15%)</span>
+                            </span>
+                            <input type="number" 
+                                   class="score-input score-field" 
+                                   name="scores[performance][presence]"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01" 
+                                   required>
+                        </div>
 
-                    <button type="submit" class="btn btn-primary save-button">
-                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <div class="subcriteria-row">
+                            <span class="subcriteria-label">
+                                Interpretation
+                                <span class="subcriteria-weight">(15%)</span>
+                            </span>
+                            <input type="number" 
+                                   class="score-input score-field" 
+                                   name="scores[performance][interpretation]"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.01" 
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="total-score">
+                    <span class="total-score-label">Total Score:</span>
+                    <span class="total-score-value" id="totalScore_{{ $contestant['id'] }}">0.00</span>
+                </div>
+
+                <div class="action-buttons">
+                    <button type="submit" class="btn-save">
                         Save Scores
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
         @endforeach
     </div>
 </div>
+
 @endsection
 
 @section('scripts')
@@ -206,8 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchTerm = e.target.value.toLowerCase();
         
         contestantCards.forEach(card => {
-            const contestantName = card.querySelector('h4').textContent.toLowerCase();
-            const contestantNumber = card.querySelector('small').textContent.toLowerCase();
+            const contestantName = card.querySelector('h3').textContent.toLowerCase();
+            const contestantNumber = card.querySelector('.contestant-number').textContent.toLowerCase();
             
             if (contestantName.includes(searchTerm) || contestantNumber.includes(searchTerm)) {
                 card.style.display = '';
@@ -217,36 +303,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Score calculation and form submission
-    const scoringForms = document.querySelectorAll('.scoring-form');
-
-    scoringForms.forEach(form => {
+    // Score calculation
+    document.querySelectorAll('.scoring-form').forEach(form => {
+        const inputs = form.querySelectorAll('.score-input');
         const contestantId = form.querySelector('[name="contestant_id"]').value;
-        const scoreInputs = form.querySelectorAll('.score-field');
-        const totalScoreDisplay = document.getElementById(`totalScore_${contestantId}`);
+        const totalDisplay = document.getElementById(`totalScore_${contestantId}`);
 
-        // Calculate total score when inputs change
-        scoreInputs.forEach(input => {
+        inputs.forEach(input => {
             input.addEventListener('input', function() {
                 let total = 0;
-                scoreInputs.forEach(field => {
-                    const score = parseFloat(field.value) || 0;
-                    const weight = parseFloat(field.dataset.weight) || 0;
-                    total += (score * weight / 100);
-                });
-                totalScoreDisplay.textContent = total.toFixed(2);
+                let voiceQualityTotal = 0;
+                let performanceTotal = 0;
+
+                // Calculate Voice Quality scores (40% total)
+                const pitchScore = parseFloat(form.querySelector('[name="scores[voice_quality][pitch]"]').value || 0) * 0.15;
+                const toneScore = parseFloat(form.querySelector('[name="scores[voice_quality][tone]"]').value || 0) * 0.15;
+                const breathScore = parseFloat(form.querySelector('[name="scores[voice_quality][breath]"]').value || 0) * 0.10;
+                voiceQualityTotal = pitchScore + toneScore + breathScore;
+
+                // Calculate Performance scores (30% total)
+                const presenceScore = parseFloat(form.querySelector('[name="scores[performance][presence]"]').value || 0) * 0.15;
+                const interpretationScore = parseFloat(form.querySelector('[name="scores[performance][interpretation]"]').value || 0) * 0.15;
+                performanceTotal = presenceScore + interpretationScore;
+
+                total = voiceQualityTotal + performanceTotal;
+                totalDisplay.textContent = total.toFixed(2);
             });
         });
+    });
 
-        // Handle form submission
+    // Form submission
+    document.querySelectorAll('.scoring-form').forEach(form => {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const submitButton = form.querySelector('button[type="submit"]');
-            const spinner = submitButton.querySelector('.spinner-border');
+            const submitButton = form.querySelector('.btn-save');
             
             try {
                 submitButton.disabled = true;
-                spinner.classList.remove('d-none');
+                form.classList.add('loading');
 
                 const formData = new FormData(form);
                 const response = await fetch("{{ route('judge.tabulation.save-score') }}", {
@@ -260,29 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (!response.ok) throw new Error('Failed to save scores');
-
-                const saveStatus = document.getElementById('saveStatus');
-                saveStatus.textContent = 'Scores saved successfully!';
-                setTimeout(() => saveStatus.textContent = '', 3000);
+                alert('Scores saved successfully!');
 
             } catch (error) {
                 console.error('Error saving scores:', error);
                 alert('Failed to save scores. Please try again.');
             } finally {
                 submitButton.disabled = false;
-                spinner.classList.add('d-none');
-            }
-        });
-    });
-
-    // Validate score inputs
-    document.querySelectorAll('.score-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            if (value < 0 || value > 100) {
-                this.setCustomValidity('Score must be between 0 and 100');
-            } else {
-                this.setCustomValidity('');
+                form.classList.remove('loading');
             }
         });
     });

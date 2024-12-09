@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
 
-class JudgeScoreController extends Controller
+class JudgeResultController extends Controller
 {
     protected $database;
     
@@ -15,10 +15,9 @@ class JudgeScoreController extends Controller
         $this->database = $database;
     }
 
-    public function score()
+    public function index()
     {
         // Get the judge's assigned event
-        $judgeId = session('user.id');
         $eventName = session('user.event_name');
         
         // Get event details
@@ -27,13 +26,17 @@ class JudgeScoreController extends Controller
             ->equalTo($eventName)
             ->getValue();
 
-        // Example scoring data (to be replaced with real data)
-        $scoringData = [
-            'contestants_scored' => 8,
+        // Example results data (to be replaced with real data)
+        $eventResults = [
+            'status' => 'Completed',
             'total_contestants' => 10,
-            'average_score' => 88.5
+            'winners' => [
+                ['name' => 'Contestant 1', 'score' => 92.8],
+                ['name' => 'Contestant 2', 'score' => 89.5],
+                ['name' => 'Contestant 3', 'score' => 87.3]
+            ]
         ];
 
-        return view('firebase.judge.scores', compact('event', 'scoringData'));
+        return view('firebase.judge.results', compact('event', 'eventResults'));
     }
 }

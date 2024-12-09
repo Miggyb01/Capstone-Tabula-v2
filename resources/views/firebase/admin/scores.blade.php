@@ -1,30 +1,52 @@
-<!-- resources/views/firebase/tabulation/scores.blade.php -->
-@extends('firebase.app')
+@extends('firebase.layouts.admin-app')
 
 @section('content')
 <div class="container-fluid p-4">
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h2>Event Scores</h2>
-        </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ route('tabulation.export') }}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Export Scores
-            </a>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold fs-4 mb-0">Scoring Overview</h3>
+        <div class="btn-group">
+            <button class="btn btn-primary">
+                <i class="ri-file-excel-line me-2"></i>Export
+            </button>
+            <button class="btn btn-secondary">
+                <i class="ri-printer-line me-2"></i>Print
+            </button>
         </div>
     </div>
 
+    <!-- Event Filter -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <select class="form-select">
+                <option value="">All Events</option>
+                @foreach($events ?? [] as $event)
+                    <option value="{{ $event['id'] }}">{{ $event['ename'] }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4 ms-auto">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search...">
+                <button class="btn btn-outline-secondary">
+                    <i class="ri-search-line"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
     <div class="card">
-        <div class="card-header">
+        <div class="card-header bg-white">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
                     <a class="nav-link active" href="#overall" data-bs-toggle="tab">Overall Scores</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#by-judge" data-bs-toggle="tab">Scores by Judge</a>
+                    <a class="nav-link" href="#judges" data-bs-toggle="tab">Judge Scoring</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#by-criteria" data-bs-toggle="tab">Scores by Criteria</a>
+                    <a class="nav-link" href="#criteria" data-bs-toggle="tab">Criteria Analysis</a>
                 </li>
             </ul>
         </div>
@@ -36,60 +58,66 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Rank</th>
+                                    <th>Event</th>
                                     <th>Contestant</th>
                                     <th>Total Score</th>
                                     <th>Average</th>
+                                    <th>Judges Scored</th>
+                                    <th>Last Updated</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($scores ?? [] as $index => $score)
+                                @for($i = 1; $i <= 5; $i++)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $score['contestant_name'] }}</td>
-                                    <td>{{ number_format($score['total'], 2) }}</td>
-                                    <td>{{ number_format($score['average'], 2) }}</td>
+                                    <td>Sample Event {{$i}}</td>
+                                    <td>Contestant {{$i}}</td>
+                                    <td>{{ 85 + $i }}</td>
+                                    <td>{{ 87 + $i }}</td>
+                                    <td>3/5</td>
+                                    <td>2024-03-09 14:30</td>
                                     <td>
-                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $score['id'] }}">
-                                            <i class="fas fa-eye"></i> Details
+                                        <button class="btn btn-sm btn-info">
+                                            <i class="ri-eye-line"></i> View
                                         </button>
                                     </td>
                                 </tr>
-                                @endforeach
+                                @endfor
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Scores by Judge Tab -->
-                <div class="tab-pane fade" id="by-judge">
+                <!-- Judge Scoring Tab -->
+                <div class="tab-pane fade" id="judges">
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Judge</th>
+                                    <th>Judge Name</th>
+                                    <th>Event</th>
                                     <th>Scores Submitted</th>
-                                    <th>Average Score</th>
-                                    <th>Last Updated</th>
+                                    <th>Average Score Given</th>
+                                    <th>Last Activity</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($judgeScores ?? [] as $judge)
+                                @for($i = 1; $i <= 5; $i++)
                                 <tr>
-                                    <td>{{ $judge['name'] }}</td>
-                                    <td>{{ $judge['submitted_count'] }}</td>
-                                    <td>{{ number_format($judge['average'], 2) }}</td>
-                                    <td>{{ $judge['last_updated'] }}</td>
+                                    <td>Judge {{$i}}</td>
+                                    <td>Sample Event {{$i}}</td>
+                                    <td>{{$i}}/10</td>
+                                    <td>{{ 85 + $i }}</td>
+                                    <td>2024-03-09 14:30</td>
                                 </tr>
-                                @endforeach
+                                @endfor
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Scores by Criteria Tab -->
-                <div class="tab-pane fade" id="by-criteria">
+                <!-- Criteria Analysis Tab -->
+                <div class="tab-pane fade" id="criteria">
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -102,15 +130,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($criteriaScores ?? [] as $criteria)
+                                @for($i = 1; $i <= 5; $i++)
                                 <tr>
-                                    <td>{{ $criteria['name'] }}</td>
-                                    <td>{{ $criteria['weight'] }}%</td>
-                                    <td>{{ number_format($criteria['average'], 2) }}</td>
-                                    <td>{{ number_format($criteria['highest'], 2) }}</td>
-                                    <td>{{ number_format($criteria['lowest'], 2) }}</td>
+                                    <td>Criteria {{$i}}</td>
+                                    <td>{{20}}%</td>
+                                    <td>{{ 85 + $i }}</td>
+                                    <td>{{ 90 + $i }}</td>
+                                    <td>{{ 80 + $i }}</td>
                                 </tr>
-                                @endforeach
+                                @endfor
                             </tbody>
                         </table>
                     </div>
@@ -119,21 +147,4 @@
         </div>
     </div>
 </div>
-
-<!-- Score Details Modal -->
-@foreach($scores ?? [] as $score)
-<div class="modal fade" id="detailsModal{{ $score['id'] }}" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Score Details - {{ $score['contestant_name'] }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Detailed scores here -->
-            </div>
-        </div>
-    </div>
-</div>
-@endforeach
 @endsection
