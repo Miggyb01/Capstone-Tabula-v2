@@ -15,7 +15,7 @@ class JudgeTabulationController extends Controller
         $this->database = $database;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         // Get the current judge's event from session
         $judgeEventName = session('user.event_name');
@@ -24,16 +24,43 @@ class JudgeTabulationController extends Controller
             return response()->json(['error' => 'No event assigned'], 400);
         }
 
+        // Get event details
+        $eventDetails = $this->database->getReference('events')
+            ->orderByChild('ename')
+            ->equalTo($judgeEventName)
+            ->getValue();
+
+        if (!$eventDetails) {
+            return redirect()->back()->with('error', 'Event not found');
+        }
+        
         // Get event criteria
         $criteria = $this->getEventCriteria($judgeEventName);
+        if (!$criteria) {
+            return redirect()->back()->with('error', 'No criteria found for this event');
+        }
         
-        // Get contestants for the event
+        // Get contestants
         $contestants = $this->getEventContestants($judgeEventName);
+
+        // Get all categories
+        $categories = array_keys($criteria);
+
+        // Get current category from request or use first category
+        $currentCategory = $request->query('category', reset($categories));
+        
+        // If category is not valid, default to first category
+        if (!in_array($currentCategory, $categories)) {
+            $currentCategory = reset($categories);
+        }
 
         return view('firebase.judge.judge-tabulation', [
             'eventName' => $judgeEventName,
+            'eventDetails' => $eventDetails,
             'criteria' => $criteria,
-            'contestants' => $contestants
+            'contestants' => $contestants,
+            'currentCategory' => $currentCategory,
+            'categories' => $categories
         ]);
     }
 
@@ -48,31 +75,38 @@ class JudgeTabulationController extends Controller
             return null;
         }
 
-        // Transform criteria data for easier use in the view
         $transformedCriteria = [];
-        foreach ($criteria as $key => $criteriaData) {
+        foreach ($criteria as $criteriaData) {
             if (isset($criteriaData['categories'])) {
                 foreach ($criteriaData['categories'] as $category) {
-                    $mainCriteria = [];
+                    $categoryData = [
+                        'name' => $category['category_name'],
+                        'details' => $category['criteria_details'] ?? '',
+                        'main_criteria' => []
+                    ];
+                    
                     if (isset($category['main_criteria'])) {
                         foreach ($category['main_criteria'] as $main) {
-                            $subCriteria = [];
+                            $mainData = [
+                                'name' => $main['name'],
+                                'percentage' => $main['percentage'],
+                                'sub_criteria' => []
+                            ];
+                            
                             if (isset($main['sub_criteria'])) {
                                 foreach ($main['sub_criteria'] as $sub) {
-                                    $subCriteria[] = [
+                                    $mainData['sub_criteria'][] = [
                                         'name' => $sub['name'],
                                         'percentage' => $sub['percentage']
                                     ];
                                 }
                             }
-                            $mainCriteria[] = [
-                                'name' => $main['name'],
-                                'percentage' => $main['percentage'],
-                                'sub_criteria' => $subCriteria
-                            ];
+                            
+                            $categoryData['main_criteria'][] = $mainData;
                         }
                     }
-                    $transformedCriteria[$category['category_name']] = $mainCriteria;
+                    
+                    $transformedCriteria[$category['category_name']] = $categoryData;
                 }
             }
         }
@@ -91,16 +125,42 @@ class JudgeTabulationController extends Controller
             return [];
         }
 
-        // Transform contestants data
         $transformedContestants = [];
+        $counter = 1; // Initialize counter for contestant numbers
+
+        // Convert to array and maintain creation order
         foreach ($contestants as $key => $contestant) {
+            // Ensure all required fields exist, use empty string as fallback
+            $firstName = $contestant['cfname'] ?? '';
+            $middleName = $contestant['cmname'] ?? '';
+            $lastName = $contestant['clname'] ?? '';
+
+            // Build full name - trim spaces and handle empty middle name
+            $fullName = $firstName;
+            if (!empty($middleName)) {
+                $fullName .= ' ' . $middleName;
+            }
+            if (!empty($lastName)) {
+                $fullName .= ' ' . $lastName;
+            }
+
+            // Create contestant data array
             $transformedContestants[] = [
                 'id' => $key,
-                'number' => $key, // You might want to add a specific number field in your database
-                'name' => $contestant['cfname'] . ' ' . $contestant['cmname'] . ' ' . $contestant['clname'],
-                'category' => $contestant['category'] ?? 'Default Category'
+                'number' => $counter++, // Add sequential number
+                'name' => trim($fullName), // Remove any extra spaces
+                'fname' => $firstName,
+                'mname' => $middleName,
+                'lname' => $lastName,
+                'unique_code' => '#-' . substr(md5($key), 0, 20),
+                'event_name' => $contestant['ename'] ?? '',
             ];
         }
+
+        // Sort by number to ensure consistent order
+        usort($transformedContestants, function($a, $b) {
+            return $a['number'] <=> $b['number'];
+        });
 
         return $transformedContestants;
     }
@@ -109,6 +169,7 @@ class JudgeTabulationController extends Controller
     {
         $request->validate([
             'contestant_id' => 'required',
+            'category' => 'required',
             'scores' => 'required|array'
         ]);
 
@@ -116,16 +177,59 @@ class JudgeTabulationController extends Controller
         $eventName = session('user.event_name');
 
         try {
-            $scoreRef = $this->database->getReference("scores/{$eventName}/{$request->contestant_id}/{$judgeId}");
-            $scoreRef->set([
+            // First validate if all scores are within range
+            foreach ($request->scores as $mainCriteria) {
+                foreach ($mainCriteria as $score) {
+                    if ($score < 0 || $score > 100) {
+                        throw new \Exception('Scores must be between 0 and 100');
+                    }
+                }
+            }
+
+            // Save the scores
+            $scoreRef = $this->database->getReference("scores/{$eventName}/{$request->contestant_id}/{$judgeId}/{$request->category}");
+            $scoreData = [
                 'scores' => $request->scores,
                 'timestamp' => ['.sv' => 'timestamp'],
-                'judge_id' => $judgeId
+                'judge_id' => $judgeId,
+                'event_name' => $eventName,
+                'category' => $request->category
+            ];
+
+            $scoreRef->set($scoreData);
+
+            return response()->json([
+                'message' => 'Score saved successfully',
+                'data' => $scoreData
             ]);
 
-            return response()->json(['message' => 'Score saved successfully']);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to save score'], 500);
+            return response()->json([
+                'error' => 'Failed to save score',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getContestantScores($contestantId, $category)
+    {
+        try {
+            $eventName = session('user.event_name');
+            $judgeId = session('user.id');
+
+            $scoreRef = $this->database->getReference("scores/{$eventName}/{$contestantId}/{$judgeId}/{$category}");
+            $scores = $scoreRef->getValue();
+
+            return response()->json([
+                'success' => true,
+                'data' => $scores
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve scores'
+            ], 500);
         }
     }
 }

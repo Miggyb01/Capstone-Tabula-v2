@@ -1,282 +1,206 @@
 @extends('firebase.layouts.judge-app')
 
-
 <style>
-    .scoring-container {
-        padding: 20px;
-        background: #fff;
-    }
+.table-tabulation-judge-user th {
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid #dee2e6;
+}
 
-    .search-container {
-        margin-bottom: 30px;
-    }
+.table-tabulation-judge-user thead tr:first-child th {
+    border-bottom: 1px solid #fff;
+    background-color: #3155FE;
+    color: white;
+    font-size: 22px;
+}
 
-    .search-input {
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 8px 12px;
-        width: 300px;
-    }
+.contestant-cell {
+    max-width: 200px;
+    white-space: normal;
+    font-size: 20px;
+    padding: 12px 15px !important;
+}
 
-    .contestant-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        margin-bottom: 30px;
-        padding: 20px;
-    }
+.score-input-tabulation-judge-user {
+    width: 80px;
+    margin: 0 auto;
+    text-align: center;
+}
 
-    .contestant-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #eee;
-    }
+.submit-score-tabulation-judge-user {
+    background-color: #3155FE;
+    border-color: #3155FE;
+    color: white;
+}
 
-    .contestant-info h3 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
+.table-tabulation-judge-user thead th {
+    padding: 12px 8px;
+    font-size: 14px;
+}
 
-    .contestant-number {
-        color: #666;
-        font-size: 0.9rem;
-    }
+.table-tabulation-judge-user thead tr:first-child th {
+    text-align: center;
+}
 
-    .contestant-category {
-        background: #f8f9fa;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        color: #666;
-    }
+.table-responsive {
+    border-radius: 20px;
+}   
 
-    .criteria-section {
-        margin-bottom: 25px;
-    }
+.table-tabulation-judge-user thead tr:nth-child(2) th {
+    background-color: #F8F9FA;
+    color: black;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    font-size: 18px;
+    border-top: none;
+}
 
-    .criteria-title {
-        font-weight: 600;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+.category-title-tabulation-judge-user {
+    color: black;
+    font-weight: bold;
+    margin-right: 30px;
+}
 
-    .criteria-weight {
-        color: #666;
-        font-size: 0.9rem;
-    }
+.event-name-tabulation-judge-user {
+    text-align: center;
 
-    .subcriteria-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 30px;
+}
 
-    .subcriteria-label {
-        flex: 1;
-        font-size: 0.95rem;
-    }
+.contestant-number-display {
+    font-weight: bold;
+    color: #3155FE;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
 
-    .subcriteria-weight {
-        color: #666;
-        margin-left: 5px;
-        font-size: 0.85rem;
-    }
+.contestant-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
 
-    .score-input {
-        width: 80px;
-        text-align: center;
-        padding: 4px 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        margin-left: 15px;
-    }
+.contestant-cell {
+    padding: 12px 15px !important;
+}
 
-    .score-input:focus {
-        border-color: #80bdff;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-    }
 
-    .total-score {
-        text-align: right;
-        padding-top: 20px;
-        margin-top: 20px;
-        border-top: 2px solid #eee;
-    }
 
-    .total-score-label {
-        font-weight: 600;
-        margin-right: 15px;
-    }
-
-    .total-score-value {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #0d6efd;
-    }
-
-    .action-buttons {
-        margin-top: 20px;
-        text-align: right;
-    }
-
-    .btn-save {
-        background: #0d6efd;
-        color: white;
-        border: none;
-        padding: 8px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .btn-save:hover {
-        background: #0b5ed7;
-    }
-
-    /* Loading state styles */
-    .loading {
-        opacity: 0.7;
-        pointer-events: none;
-    }
 </style>
 
-
 @section('content')
-<div class="scoring-container">
-    <div class="search-container">
-        <input type="text" 
-               class="search-input" 
-               placeholder="Search contestants..." 
-               id="contestantSearch">
-    </div>
+<h3 class="fw-bold fs-4 mb-1 mt-4 ms-4">Tabulation</h3> 
+<div class="event-name-tabulation-judge-user">{{ $eventName }}</div>
 
-    <div id="contestantsList">
-        @foreach($contestants as $contestant)
-        <div class="contestant-card" data-contestant-id="{{ $contestant['id'] }}">
-            <div class="contestant-header">
-                <div class="contestant-info">
-                    <h3>{{ $contestant['name'] }}</h3>
-                    <span class="contestant-number">Number: {{ $contestant['number'] }}</span>
-                </div>
-                <span class="contestant-category">{{ $contestant['category'] }}</span>
-            </div>
-
-            <form id="scoringForm_{{ $contestant['id'] }}" class="scoring-form">
-                @csrf
-                <input type="hidden" name="contestant_id" value="{{ $contestant['id'] }}">
-
-                <!-- Voice Quality Section -->
-                <div class="criteria-section">
-                    <div class="criteria-title">
-                        <span>Voice Quality</span>
-                        <span class="criteria-weight">(40%)</span>
-                    </div>
-                    
-                    <div class="subcriteria-group">
-                        <div class="subcriteria-row">
-                            <span class="subcriteria-label">
-                                Pitch Accuracy
-                                <span class="subcriteria-weight">(15%)</span>
-                            </span>
-                            <input type="number" 
-                                   class="score-input score-field" 
-                                   name="scores[voice_quality][pitch]"
-                                   min="0" 
-                                   max="100" 
-                                   step="0.01" 
-                                   required>
-                        </div>
-                        
-                        <div class="subcriteria-row">
-                            <span class="subcriteria-label">
-                                Tone Quality
-                                <span class="subcriteria-weight">(15%)</span>
-                            </span>
-                            <input type="number" 
-                                   class="score-input score-field" 
-                                   name="scores[voice_quality][tone]"
-                                   min="0" 
-                                   max="100" 
-                                   step="0.01" 
-                                   required>
-                        </div>
-
-                        <div class="subcriteria-row">
-                            <span class="subcriteria-label">
-                                Breath Control
-                                <span class="subcriteria-weight">(10%)</span>
-                            </span>
-                            <input type="number" 
-                                   class="score-input score-field" 
-                                   name="scores[voice_quality][breath]"
-                                   min="0" 
-                                   max="100" 
-                                   step="0.01" 
-                                   required>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Performance Section -->
-                <div class="criteria-section">
-                    <div class="criteria-title">
-                        <span>Performance</span>
-                        <span class="criteria-weight">(30%)</span>
-                    </div>
-                    
-                    <div class="subcriteria-group">
-                        <div class="subcriteria-row">
-                            <span class="subcriteria-label">
-                                Stage Presence
-                                <span class="subcriteria-weight">(15%)</span>
-                            </span>
-                            <input type="number" 
-                                   class="score-input score-field" 
-                                   name="scores[performance][presence]"
-                                   min="0" 
-                                   max="100" 
-                                   step="0.01" 
-                                   required>
-                        </div>
-
-                        <div class="subcriteria-row">
-                            <span class="subcriteria-label">
-                                Interpretation
-                                <span class="subcriteria-weight">(15%)</span>
-                            </span>
-                            <input type="number" 
-                                   class="score-input score-field" 
-                                   name="scores[performance][interpretation]"
-                                   min="0" 
-                                   max="100" 
-                                   step="0.01" 
-                                   required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="total-score">
-                    <span class="total-score-label">Total Score:</span>
-                    <span class="total-score-value" id="totalScore_{{ $contestant['id'] }}">0.00</span>
-                </div>
-
-                <div class="action-buttons">
-                    <button type="submit" class="btn-save">
-                        Save Scores
+<div class="container-fluid p-4 container-tabulation-judge-user">
+    <!-- Header with Search and Category -->
+    <div class="row mb-4 header-row-tabulation-judge-user">
+        <div class="col-md-6">
+            <div class="search-container-tabulation-judge-user">
+                <div class="input-group">
+                    <input type="text" id="contestantSearch" class="form-control search-input-tabulation-judge-user" 
+                           placeholder="Search contestants...">
+                    <button class="btn btn-outline-secondary btn-search-tabulation-judge-user" type="button">
+                        <i class="ri-search-line"></i>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
-        @endforeach
+        <div class="col-md-6 text-end">
+            <h4 class="category-title-tabulation-judge-user mt-1">Category: {{ $currentCategory }}</h4>
+        </div>
     </div>
+
+    @if($currentCategory)
+    <div class="card-scoring-card-tabulation-judge-user">
+        <div class="card-body-tabulation-judge-user p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 table-tabulation-judge-user">
+                    <thead>
+                        <!-- Main criteria row -->
+                        <tr>
+                            <th rowspan="2" class="align-middle">Contestant</th>
+                            @foreach($criteria[$currentCategory]['main_criteria'] as $main)
+                                <th colspan="{{ count($main['sub_criteria']) }}">
+                                    {{ $main['name'] }} ({{ $main['percentage'] }}%)
+                                </th>
+                            @endforeach
+                            <th rowspan="2" class="align-middle">Actions</th>
+                        </tr>
+                        <!-- Sub criteria row -->
+                        <tr>
+                            @foreach($criteria[$currentCategory]['main_criteria'] as $main)
+                                @foreach($main['sub_criteria'] as $sub)
+                                    <th class="text-center">
+                                        {{ $sub['name'] }}<br>({{ $sub['percentage'] }}%)
+                                    </th>
+                                @endforeach
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($contestants as $contestant)
+                        <tr class="contestant-row-tabulation-judge-user">
+                            <td class="contestant-cell">
+                                <div class="contestant-info-tabulation-judge-user">
+                                    <span class="contestant-number-tabulation-judge-user">{{ $contestant['number'] }}.</span>
+                                    <span class="contestant-name-tabulation-judge-user">{{ $contestant['name'] }}</span>
+                                </div>
+                            </td>
+                            @foreach($criteria[$currentCategory]['main_criteria'] as $main)
+                                @foreach($main['sub_criteria'] as $sub)
+                                    <td class="text-center">
+                                        <input type="number" 
+                                               class="form-control score-input-tabulation-judge-user"
+                                               name="scores[{{ $main['name'] }}][{{ $sub['name'] }}]"
+                                               min="0"
+                                               max="100"
+                                               step="0.01"
+                                               required>
+                                    </td>
+                                @endforeach
+                            @endforeach
+                            <td class="text-center">
+                                <button class="btn btn-primary submit-score-tabulation-judge-user"
+                                        data-contestant-id="{{ $contestant['id'] }}">
+                                    Submit Scores
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Button -->
+    <div class="d-flex justify-content-end mt-3">
+        @php
+            $currentIndex = array_search($currentCategory, $categories);
+            $nextCategory = ($currentIndex !== false && isset($categories[$currentIndex + 1])) 
+                ? $categories[$currentIndex + 1] 
+                : null;
+        @endphp
+        
+        @if($nextCategory)
+            <a href="{{ route('judge.tabulation', ['category' => $nextCategory]) }}" 
+               class="btn btn-primary next-category-tabulation-judge-user"
+               style="background-color: #3155FE; border-color: #3155FE;">
+                Next Category
+            </a>
+        @else
+            <button class="btn btn-primary next-category-tabulation-judge-user" disabled
+                    style="background-color: #3155FE; border-color: #3155FE;">
+                Next Category
+            </button>
+        @endif
+    </div>
+    @endif
 </div>
 
 @endsection
@@ -285,83 +209,58 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Search functionality
-    const searchInput = document.getElementById('contestantSearch');
-    const contestantCards = document.querySelectorAll('.contestant-card');
+    const searchInput = document.querySelector('.search-input-tabulation-judge-user');
+    const contestantRows = document.querySelectorAll('.contestant-row-tabulation-judge-user');
 
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase();
         
-        contestantCards.forEach(card => {
-            const contestantName = card.querySelector('h3').textContent.toLowerCase();
-            const contestantNumber = card.querySelector('.contestant-number').textContent.toLowerCase();
+        contestantRows.forEach(row => {
+            const contestantCell = row.querySelector('.contestant-cell');
+            const contestantName = contestantCell.querySelector('div:first-child').textContent.toLowerCase();
+            const contestantCode = contestantCell.querySelector('.contestant-unique-code').textContent.toLowerCase();
             
-            if (contestantName.includes(searchTerm) || contestantNumber.includes(searchTerm)) {
-                card.style.display = '';
+            if (contestantName.includes(searchTerm) || contestantCode.includes(searchTerm)) {
+                row.style.display = '';
             } else {
-                card.style.display = 'none';
+                row.style.display = 'none';
             }
         });
     });
 
-    // Score calculation
-    document.querySelectorAll('.scoring-form').forEach(form => {
-        const inputs = form.querySelectorAll('.score-input');
-        const contestantId = form.querySelector('[name="contestant_id"]').value;
-        const totalDisplay = document.getElementById(`totalScore_${contestantId}`);
-
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                let total = 0;
-                let voiceQualityTotal = 0;
-                let performanceTotal = 0;
-
-                // Calculate Voice Quality scores (40% total)
-                const pitchScore = parseFloat(form.querySelector('[name="scores[voice_quality][pitch]"]').value || 0) * 0.15;
-                const toneScore = parseFloat(form.querySelector('[name="scores[voice_quality][tone]"]').value || 0) * 0.15;
-                const breathScore = parseFloat(form.querySelector('[name="scores[voice_quality][breath]"]').value || 0) * 0.10;
-                voiceQualityTotal = pitchScore + toneScore + breathScore;
-
-                // Calculate Performance scores (30% total)
-                const presenceScore = parseFloat(form.querySelector('[name="scores[performance][presence]"]').value || 0) * 0.15;
-                const interpretationScore = parseFloat(form.querySelector('[name="scores[performance][interpretation]"]').value || 0) * 0.15;
-                performanceTotal = presenceScore + interpretationScore;
-
-                total = voiceQualityTotal + performanceTotal;
-                totalDisplay.textContent = total.toFixed(2);
-            });
-        });
-    });
-
-    // Form submission
-    document.querySelectorAll('.scoring-form').forEach(form => {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitButton = form.querySelector('.btn-save');
+    // Score submission
+    document.querySelectorAll('.submit-score-tabulation-judge-user').forEach(button => {
+        button.addEventListener('click', async function() {
+            const row = this.closest('tr');
+            const contestantId = this.dataset.contestantId;
+            const scores = {};
             
-            try {
-                submitButton.disabled = true;
-                form.classList.add('loading');
+            row.querySelectorAll('.score-input-tabulation-judge-user').forEach(input => {
+                const name = input.name.match(/\[(.*?)\]/g).map(m => m.slice(1, -1));
+                if (!scores[name[0]]) scores[name[0]] = {};
+                scores[name[0]][name[1]] = parseFloat(input.value) || 0;
+            });
 
-                const formData = new FormData(form);
+            try {
                 const response = await fetch("{{ route('judge.tabulation.save-score') }}", {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(Object.fromEntries(formData))
+                    body: JSON.stringify({
+                        contestant_id: contestantId,
+                        category: '{{ $currentCategory }}',
+                        scores: scores
+                    })
                 });
 
                 if (!response.ok) throw new Error('Failed to save scores');
-                alert('Scores saved successfully!');
+                alert('Scores submitted successfully!');
 
             } catch (error) {
                 console.error('Error saving scores:', error);
                 alert('Failed to save scores. Please try again.');
-            } finally {
-                submitButton.disabled = false;
-                form.classList.remove('loading');
             }
         });
     });

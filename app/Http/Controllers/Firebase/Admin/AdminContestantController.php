@@ -99,23 +99,23 @@ class AdminContestantController extends Controller
             ? redirect()->route('admin.contestant.list')->with('success', 'Judge Added Successfully')
             : redirect()->route('admin.contestant.list')->with('error', 'Judge Not added');
     }
+   
+
     public function edit($id)
     {
         $key = $id;
         $editdata = $this->database->getReference($this->tablename)->getChild($key)->getValue();
 
-        if ($editdata && isset($editdata['event_name'])) {
+        if ($editdata) { // Remove the event_name check since we're using ename
             // Fetch all events
             $events = $this->database->getReference('events')->getValue();
             
             return view('firebase.admin.contestant.contestant-edit', compact('editdata', 'key', 'events'));
         } else {
             return redirect()->route('admin.contestant.list')
-                            ->with('status', 'Contestant ID or Event Name not Found');
+                            ->with('status', 'Contestant not found');
         }
     }
-
-
     public function update(Request $request, $id)
     {
         $key = $id;

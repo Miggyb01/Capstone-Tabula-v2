@@ -22,7 +22,8 @@
                         <option value="" disabled>Events</option>
                         @foreach($events as $eventId => $event)
                             <option value="{{ $eventId }}" 
-                                {{ $editdata['event_name'] == $eventId ? 'selected' : '' }}>
+                            
+                                {{ $editdata['ename'] == $eventId ? 'selected' : '' }}>
                                 {{ $event['ename'] }}
                             </option>
                         @endforeach
