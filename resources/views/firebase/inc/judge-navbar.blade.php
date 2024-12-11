@@ -31,9 +31,9 @@
                     </a>
                 </li>
                 <li class="sidebar-item">    
-                    <a href="{{ route('judge.report') }}" class="sidebar-link">
-                        <i class="ri-line-chart-line"></i>
-                        <span>Report</span>
+                    <a href="{{ route('judge.result') }}" class="sidebar-link">
+                        <i class="ri-bar-chart-line"></i>
+                        <span>Result</span>
                     </a>
                 </li>
             </ul>

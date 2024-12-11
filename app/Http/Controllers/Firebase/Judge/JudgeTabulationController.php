@@ -8,23 +8,22 @@ use Kreait\Firebase\Contract\Database;
 
 class JudgeTabulationController extends Controller
 {
-    protected $database;
+    protected $database, $tablename;
 
     public function __construct(Database $database)
     {
         $this->database = $database;
+        $this->tablename = 'tabulation';
     }
 
     public function index(Request $request)
     {
-        // Get the current judge's event from session
         $judgeEventName = session('user.event_name');
         
         if (!$judgeEventName) {
             return response()->json(['error' => 'No event assigned'], 400);
         }
 
-        // Get event details
         $eventDetails = $this->database->getReference('events')
             ->orderByChild('ename')
             ->equalTo($judgeEventName)
@@ -34,22 +33,16 @@ class JudgeTabulationController extends Controller
             return redirect()->back()->with('error', 'Event not found');
         }
         
-        // Get event criteria
         $criteria = $this->getEventCriteria($judgeEventName);
         if (!$criteria) {
             return redirect()->back()->with('error', 'No criteria found for this event');
         }
         
-        // Get contestants
         $contestants = $this->getEventContestants($judgeEventName);
-
-        // Get all categories
+        $submittedScores = $this->getSubmittedScores($judgeEventName);
         $categories = array_keys($criteria);
-
-        // Get current category from request or use first category
         $currentCategory = $request->query('category', reset($categories));
         
-        // If category is not valid, default to first category
         if (!in_array($currentCategory, $categories)) {
             $currentCategory = reset($categories);
         }
@@ -60,7 +53,8 @@ class JudgeTabulationController extends Controller
             'criteria' => $criteria,
             'contestants' => $contestants,
             'currentCategory' => $currentCategory,
-            'categories' => $categories
+            'categories' => $categories,
+            'submittedScores' => $submittedScores
         ]);
     }
 
@@ -126,16 +120,13 @@ class JudgeTabulationController extends Controller
         }
 
         $transformedContestants = [];
-        $counter = 1; // Initialize counter for contestant numbers
+        $counter = 1;
 
-        // Convert to array and maintain creation order
         foreach ($contestants as $key => $contestant) {
-            // Ensure all required fields exist, use empty string as fallback
             $firstName = $contestant['cfname'] ?? '';
             $middleName = $contestant['cmname'] ?? '';
             $lastName = $contestant['clname'] ?? '';
 
-            // Build full name - trim spaces and handle empty middle name
             $fullName = $firstName;
             if (!empty($middleName)) {
                 $fullName .= ' ' . $middleName;
@@ -144,11 +135,10 @@ class JudgeTabulationController extends Controller
                 $fullName .= ' ' . $lastName;
             }
 
-            // Create contestant data array
             $transformedContestants[] = [
                 'id' => $key,
-                'number' => $counter++, // Add sequential number
-                'name' => trim($fullName), // Remove any extra spaces
+                'number' => $counter++,
+                'name' => trim($fullName),
                 'fname' => $firstName,
                 'mname' => $middleName,
                 'lname' => $lastName,
@@ -157,7 +147,6 @@ class JudgeTabulationController extends Controller
             ];
         }
 
-        // Sort by number to ensure consistent order
         usort($transformedContestants, function($a, $b) {
             return $a['number'] <=> $b['number'];
         });
@@ -165,38 +154,97 @@ class JudgeTabulationController extends Controller
         return $transformedContestants;
     }
 
+    protected function getSubmittedScores($eventName)
+    {
+        $judgeName = session('user.name');
+        $judgeId = session('user.id');
+        
+        $scoresRef = $this->database->getReference(sprintf(
+            "%s/%s/%s/judge_name/%s/tabulation_scores",
+            $this->tablename,
+            $judgeId,
+            $eventName,
+            $judgeName
+        ));
+        
+        return $scoresRef->getValue() ?? [];
+    }
+
     public function saveScore(Request $request)
     {
-        $request->validate([
-            'contestant_id' => 'required',
-            'category' => 'required',
-            'scores' => 'required|array'
-        ]);
-
-        $judgeId = session('user.id');
-        $eventName = session('user.event_name');
-
         try {
-            // First validate if all scores are within range
-            foreach ($request->scores as $mainCriteria) {
-                foreach ($mainCriteria as $score) {
-                    if ($score < 0 || $score > 100) {
-                        throw new \Exception('Scores must be between 0 and 100');
-                    }
-                }
+            $request->validate([
+                'contestant_id' => 'required',
+                'contestant_name' => 'required',
+                'category' => 'required',
+                'scores' => 'required|array',
+                'event_name' => 'required'
+            ]);
+
+            $judgeId = session('user.id');
+            $judgeName = session('user.name');
+            $eventName = $request->event_name;
+
+            \Log::info('Starting score submission', [
+                'event' => $eventName,
+                'judge' => $judgeName,
+                'contestant' => $request->contestant_name
+            ]);
+
+            $scorePath = sprintf(
+                "%s/%s/%s/judge_name/%s/tabulation_scores/contestant_name/%s/category/%s/scores",
+                $this->tablename,
+                $judgeId,
+                $eventName,
+                $judgeName,
+                $request->contestant_name,
+                $request->category
+            );
+
+            $scoreRef = $this->database->getReference($scorePath);
+            
+            // Check for existing scores
+            $existingScores = $scoreRef->getValue();
+            if ($existingScores) {
+                \Log::warning('Duplicate score submission attempt', [
+                    'path' => $scorePath,
+                    'existing_scores' => $existingScores
+                ]);
+                return response()->json([
+                    'error' => 'Scores already submitted for this contestant'
+                ], 400);
             }
 
-            // Save the scores
-            $scoreRef = $this->database->getReference("scores/{$eventName}/{$request->contestant_id}/{$judgeId}/{$request->category}");
+            // Prepare score data
             $scoreData = [
                 'scores' => $request->scores,
-                'timestamp' => ['.sv' => 'timestamp'],
-                'judge_id' => $judgeId,
+                'category_name' => $request->category,
+                'contestant_id' => $request->contestant_id,
+                'contestant_name' => $request->contestant_name,
+                'date_submitted' => date('Y-m-d H:i:s'),
                 'event_name' => $eventName,
-                'category' => $request->category
+                'judge_id' => $judgeId,
+                'judge_name' => $judgeName,
+                'timestamp' => ['.sv' => 'timestamp']
             ];
 
-            $scoreRef->set($scoreData);
+            // Save the scores
+            $result = $scoreRef->set($scoreData);
+
+            if (!$result) {
+                throw new \Exception('Failed to save scores to database');
+            }
+
+            // Verify the save
+            $savedData = $scoreRef->getValue();
+            if (!$savedData) {
+                throw new \Exception('Data verification failed after save');
+            }
+
+            \Log::info('Scores saved successfully', [
+                'path' => $scorePath,
+                'data' => $scoreData
+            ]);
 
             return response()->json([
                 'message' => 'Score saved successfully',
@@ -204,6 +252,11 @@ class JudgeTabulationController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Score submission error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'error' => 'Failed to save score',
                 'message' => $e->getMessage()
@@ -211,25 +264,19 @@ class JudgeTabulationController extends Controller
         }
     }
 
-    public function getContestantScores($contestantId, $category)
+    protected function getSubCriteriaPercentage($criteria, $category, $mainCriteriaName, $subCriteriaName)
     {
-        try {
-            $eventName = session('user.event_name');
-            $judgeId = session('user.id');
-
-            $scoreRef = $this->database->getReference("scores/{$eventName}/{$contestantId}/{$judgeId}/{$category}");
-            $scores = $scoreRef->getValue();
-
-            return response()->json([
-                'success' => true,
-                'data' => $scores
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve scores'
-            ], 500);
+        if (!isset($criteria[$category])) return 0;
+        
+        foreach ($criteria[$category]['main_criteria'] as $mainCriteria) {
+            if ($mainCriteria['name'] === $mainCriteriaName) {
+                foreach ($mainCriteria['sub_criteria'] as $subCriteria) {
+                    if ($subCriteria['name'] === $subCriteriaName) {
+                        return $subCriteria['percentage'];
+                    }
+                }
+            }
         }
+        return 0;
     }
 }

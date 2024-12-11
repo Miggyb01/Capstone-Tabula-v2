@@ -51,7 +51,7 @@
                         </div>
                     </a>
                 </div>
-                <h3 class="fw-bold mt-3 fs-4 mb-1">Ongoing Events</h3>
+                <!-- <h3 class="fw-bold mt-3 fs-4 mb-1">Ongoing Events</h3>
             <div class="row">
                 <div class="col-12 col-md-3">
                     <div class="card border-0">
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
             <!-- <h3 class="fw-bold mt-3 fs-4 mb-1">Upcoming Events</h3>
             <div class="row">
                 <div class="col-12 col-md-3">

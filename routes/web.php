@@ -29,9 +29,9 @@ use App\Http\Controllers\Firebase\Organizer\OrganizerReportController;
 // Judge Routes
 use App\Http\Controllers\Firebase\Judge\JudgeEventController;
 use App\Http\Controllers\Firebase\Judge\JudgeScoreController;
-use App\Http\Controllers\Firebase\Judge\JudgeReportController;
 use App\Http\Controllers\Firebase\Judge\JudgeTabulationController; 
 use App\Http\Controllers\Firebase\Judge\JudgeCalendarController;
+use App\Http\Controllers\Firebase\Judge\JudgeResultController;
 
 // Home Route
 Route::get('/', [HomeController::class, 'index']);
@@ -192,6 +192,5 @@ Route::prefix('judge')->name('judge.')->group(function () {
     // Result Route
     Route::get('/result', [JudgeResultController::class, 'result'])->name('result');
     
-    // Report Route
-    Route::get('/report', [JudgeReportController::class, 'report'])->name('report');
+ 
 });
