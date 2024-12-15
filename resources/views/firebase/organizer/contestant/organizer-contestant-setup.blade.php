@@ -1,15 +1,21 @@
-@extends('firebase.admin-app')
+@extends('firebase.layouts.organizer-app')
 
 @section('content')
 <div class="contestant-setup-form-container">
     <div class="event-setup-form-header  justify-content-center">
         <div class="event-icon-container  align-items-center">
             <i class="ri-group-line"></i>
-            <span>Contestant Setup</span>
+            <span>Organizer Contestant Setup</span>
         </div>
     </div>
+    
+    @if(session('status'))
+    <div class="alert alert-success">
+        {!! session('status') !!}
+    </div>
+    @endif
 
-    <form action="{{ url('contestant-list') }}" method="POST">
+    <form action="{{ route('organizer.contestant.store') }}" method="POST">      
         @csrf
         
         <!-- Event Dropdown -->
@@ -61,7 +67,7 @@
 
         <!-- Buttons -->
         <div class="form-group text-center">
-            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('dashboard') }}'">Cancel</button>
+            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('organizer.dashboard') }}'">Cancel</button>
             <button type="submit" class="btn-add">Add</button>
         </div>
     </form>

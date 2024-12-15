@@ -99,7 +99,7 @@
                             </a>
                         </li>
                         <li class="sidebar-item">
-                            <a href="#" class="sidebar-link">
+                            <a href="{{ route('admin.result') }}" class="sidebar-link">
                                 <i class="ri-bar-chart-line"></i>
                                 Result
                             </a>
@@ -107,7 +107,7 @@
                     </ul>
                 </li>
                 <li class="sidebar-item">    
-                    <a href="#" class="sidebar-link">
+                    <a href="{{ route('admin.reports') }}" class="sidebar-link">
                         <i class="ri-line-chart-line"></i>
                         <span>Report</span>
                     </a>

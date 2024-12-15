@@ -21,9 +21,8 @@
                     <select name="event_name" id="event" class="form-control" required>
                         <option value="" disabled>Events</option>
                         @foreach($events as $eventId => $event)
-                            <option value="{{ $eventId }}" 
-                            
-                                {{ $editdata['ename'] == $eventId ? 'selected' : '' }}>
+                            <option value="{{ $event['ename'] }}" 
+                                {{ $editdata['ename'] == $event['ename'] ? 'selected' : '' }}>
                                 {{ $event['ename'] }}
                             </option>
                         @endforeach

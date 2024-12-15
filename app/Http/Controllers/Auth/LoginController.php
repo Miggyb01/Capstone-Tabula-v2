@@ -33,7 +33,7 @@ class LoginController extends Controller
 
         try {
             // Admin login check
-            if ($credentials['email'] === 'admin@admin.com' && $credentials['password'] === 'admin123') {
+            if ($credentials['email'] === 'admin@admin.com' && $credentials['password'] === '!admin123') {
                 Session::put('user', [
                     'role' => 'admin',
                     'email' => $credentials['email']
@@ -43,12 +43,10 @@ class LoginController extends Controller
 
             // Judge login check
             $judges = $this->database->getReference('judges')->getValue();
-            
             if ($judges) {
                 foreach ($judges as $judgeId => $judge) {
                     if ($judge['jusername'] === $credentials['email'] && 
                         $judge['jpassword'] === $credentials['password']) {
-                        
                         Session::put('user', [
                             'role' => 'judge',
                             'id' => $judgeId,
@@ -56,13 +54,12 @@ class LoginController extends Controller
                             'event_name' => $judge['event_name'] ?? null,
                             'username' => $judge['jusername']
                         ]);
-
                         return redirect()->route('judge.dashboard');
                     }
                 }
             }
 
-            // Organizer login check
+            // Organizer login
             try {
                 $signInResult = $this->auth->signInWithEmailAndPassword(
                     $credentials['email'],
@@ -70,64 +67,116 @@ class LoginController extends Controller
                 );
 
                 $uid = $signInResult->data()['localId'];
-                $organizer = $this->database->getReference('organizers/' . $uid)->getValue();
+                
+                // Get Firebase user
+                $firebaseUser = $this->auth->getUser($uid);
+                
+                // Get user data from database
+                $organizerRef = $this->database->getReference('user_organizer')->getChild($uid);
+                $organizer = $organizerRef->getValue();
 
-                if ($organizer) {
-                    // Check email verification
-                    $user = $this->auth->getUser($uid);
-                    if (!$user->emailVerified) {
-                        throw new \Exception('Please verify your email before logging in.');
-                    }
+                if (!$organizer || !isset($organizer['user_info'])) {
+                    throw new \Exception('User account not found.');
+                }
 
-                    // Check account status
-                    if ($organizer['status'] !== 'active') {
-                        throw new \Exception('Your account is pending activation.');
-                    }
+                $userInfo = $organizer['user_info'];
 
-                    Session::put('user', [
-                        'role' => 'organizer',
-                        'id' => $uid,
-                        'name' => $organizer['full_name'],
-                        'email' => $organizer['email'],
-                        'username' => $organizer['username']
+                // If email is verified in Firebase but status is still pending in database,
+                // update the status to active
+                if ($firebaseUser->emailVerified && $userInfo['status'] === 'pending') {
+                    $organizerRef->getChild('user_info')->update([
+                        'status' => 'active',
+                        'email_verified_at' => ['.sv' => 'timestamp']
                     ]);
+                    $userInfo['status'] = 'active'; // Update local variable
+                }
 
-                    return redirect()->route('organizer.dashboard');
+                // Now check status
+                if ($userInfo['status'] === 'pending') {
+                    if (!$firebaseUser->emailVerified) {
+                        // Resend verification email if needed
+                        $this->auth->sendEmailVerificationLink($credentials['email']);
+                        throw new \Exception('Please verify your email first. A new verification link has been sent.');
+                    }
                 }
+
+                if ($userInfo['status'] !== 'active') {
+                    throw new \Exception('Your account is not active. Please verify your email.');
+                }
+
+                // Set session data
+                Session::put('user', [
+                    'role' => 'organizer',
+                    'id' => $uid,
+                    'name' => $userInfo['full_name'],
+                    'email' => $userInfo['email'],
+                    'username' => $userInfo['username']
+                ]);
+
+                return redirect()->route('organizer.dashboard');
+
+            } catch (\Kreait\Firebase\Exception\Auth\InvalidPassword $e) {
+                return back()->withInput()->withErrors(['login' => 'Invalid password.']);
+            } catch (\Kreait\Firebase\Exception\Auth\UserNotFound $e) {
+                return back()->withInput()->withErrors(['login' => 'User not found.']);
             } catch (\Exception $e) {
-                if (str_contains($e->getMessage(), 'verify your email')) {
-                    throw new \Exception('Please verify your email before logging in.');
-                } elseif (str_contains($e->getMessage(), 'pending activation')) {
-                    throw new \Exception('Your account is pending activation.');
-                } else {
-                    // Log the actual error for debugging but show a generic message to the user
-                    \Log::error('Firebase Auth Error: ' . $e->getMessage());
-                }
+                return back()->withInput()->withErrors(['login' => $e->getMessage()]);
             }
 
-            // If no successful login was found
-            throw new \Exception('Invalid username or password.');
-
         } catch (\Exception $e) {
+            \Log::error('Login error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return back()
                 ->withInput()
-                ->withErrors(['login' => $e->getMessage()]);
+                ->withErrors(['login' => 'Login failed. Please check your credentials.']);
+        }
+    }
+
+    public function completeVerification(Request $request)
+    {
+        try {
+            $tempLogin = Session::get('temp_login');
+            if (!$tempLogin) {
+                return redirect()->route('login')
+                    ->withErrors(['login' => 'Login session expired. Please try again.']);
+            }
+
+            // Get latest user data
+            $user = $this->auth->getUser($tempLogin['uid']);
+            
+            if (!$user->emailVerified) {
+                return redirect()->route('login')
+                    ->withErrors(['login' => 'Please verify your email before continuing.']);
+            }
+
+            // Set full session data
+            Session::put('user', [
+                'role' => 'organizer',
+                'id' => $tempLogin['uid'],
+                'name' => $tempLogin['full_name'],
+                'email' => $tempLogin['email'],
+                'username' => $tempLogin['username']
+            ]);
+
+            Session::forget('temp_login');
+
+            return redirect()->route('organizer.dashboard')
+                ->with('success', 'Login successful!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('login')
+                ->withErrors(['login' => 'Verification failed: ' . $e->getMessage()]);
         }
     }
 
     public function logout()
     {
         try {
-            // Get current user role before clearing session
             $userRole = Session::get('user.role');
-
-            // Clear the session
             Session::flush();
-
-            // Firebase sign out for organizers
-            if ($userRole === 'organizer') {
-                $this->auth->signOut();
-            }
 
             return redirect()->route('login')
                 ->with('success', 'Successfully logged out.');
@@ -135,25 +184,6 @@ class LoginController extends Controller
         } catch (\Exception $e) {
             return redirect()->route('login')
                 ->with('error', 'An error occurred during logout.');
-        }
-    }
-
-    protected function checkUserStatus($uid)
-    {
-        try {
-            $user = $this->auth->getUser($uid);
-            if (!$user->emailVerified) {
-                return [
-                    'status' => false,
-                    'message' => 'Please verify your email before logging in.'
-                ];
-            }
-            return ['status' => true];
-        } catch (\Exception $e) {
-            return [
-                'status' => false,
-                'message' => 'Error checking user status.'
-            ];
         }
     }
 }

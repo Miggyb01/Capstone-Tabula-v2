@@ -1,5 +1,4 @@
-@extends('firebase.oraginizer-app')
-
+@extends('firebase.layouts.organizer-app')
 @section('content')
 
        
@@ -7,11 +6,17 @@
         <div class="event-setup-form-header  justify-content-center">
             <div class="event-icon-container  align-items-center">
                 <i class="ri-calendar-todo-fill "></i>
-                <span>Event Setup</span>
+                <span>Organizer Event Setup</span>
             </div>
         </div>
 
-        <form action="{{ url('event.list') }}" method="POST">
+        @if(session('status'))
+    <div class="alert alert-success">
+        {!! session('status') !!}
+    </div>
+    @endif
+        <form action="{{ route('organizer.event.store') }}" method="POST">
+            
             @csrf
             
             <!-- First row -->
@@ -20,10 +25,24 @@
                     <label for="eventName" class="form-label mt-1 ms-2">Events Name</label>
                     <input type="text" class="form-control " name="Event_name" id="eventName" placeholder="Events Name" required>
                 </div>
+                <!-- In event-setup.blade.php, replace the Event Type input -->
                 <div class="col">
-                    <label for="eventType" class="form-label ">Event Type</label>
-                    <input type="text" class="form-control " name="Event_type" id="eventType" placeholder="Event Type" required>
+                    <label for="eventType" class="form-label">Event Type</label>
+                    <select class="form-control" id="eventTypeSelect" onchange="checkEventType(this.value)">
+                        <option value="" selected disabled>Select Event Type</option>
+                        <option value="Beauty Pageants">Beauty Pageants</option>
+                        <option value="Talent Shows">Talent Shows</option>
+                        <option value="Singing Competitions">Singing Competitions</option>
+                        <option value="Dance Competitions">Dance Competitions</option>
+                        <option value="Sports Events">Sports Events</option>
+                        <option value="custom">Other (Specify)</option>
+                    </select>
+                    
+                    <!-- Hidden input for custom event type -->
+                    <input type="text" class="form-control mt-2" name="Event_type" id="customEventType" 
+                        placeholder="Enter custom event type" style="display: none;">
                 </div>
+
                 <div class="col">
                     <label for="chooseBanner" class="form-label ">Choose Banner</label>
                     <input type="file" class="form-control-file " name="Event_banner"  id="chooseBanner" required>
@@ -66,10 +85,34 @@
 
             <!-- Buttons -->
             <div class="form-group text-center ">
-                <button type="button" class="btn-cancel">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('organizer.dashboard') }}'">Cancel</but>
                 <button type="submit" class="btn-add">Add</button>
               </div>
         </form>
     </div>
+
+<script>
+    function checkEventType(value) {
+        const customInput = document.getElementById('customEventType');
+        if (value === 'custom') {
+            customInput.style.display = 'block';
+            customInput.required = true;
+            customInput.value = '';
+        } else {
+            customInput.style.display = 'none';
+            customInput.required = false;
+            customInput.value = value;
+        }
+    }s
+
+    // Initialize the hidden input with the select value
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectElement = document.getElementById('eventTypeSelect');
+        const customInput = document.getElementById('customEventType');
+        if (selectElement.value && selectElement.value !== 'custom') {
+            customInput.value = selectElement.value;
+        }
+    });
+</script>
 
 @endsection

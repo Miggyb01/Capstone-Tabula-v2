@@ -14,6 +14,7 @@ use App\Http\Controllers\Firebase\Admin\AdminCalendarController;
 use App\Http\Controllers\Firebase\Admin\AdminResultController;
 use App\Http\Controllers\Firebase\Admin\AdminScoreController;
 use App\Http\Controllers\Firebase\Admin\AdminReportController;
+
 use App\Http\Controllers\Firebase\Admin\AdminOrganizerController;
 
 // Organizer Routes
@@ -24,7 +25,6 @@ use App\Http\Controllers\Firebase\Organizer\OrganizerJudgeController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerCalendarController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerResultController;
 use App\Http\Controllers\Firebase\Organizer\OrganizerScoreController;
-use App\Http\Controllers\Firebase\Organizer\OrganizerReportController;
 
 // Judge Routes
 use App\Http\Controllers\Firebase\Judge\JudgeEventController;
@@ -40,15 +40,16 @@ Route::get('/', [HomeController::class, 'index']);
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
-Route::get('/email/verify', [RegisterController::class, 'showVerificationNotice'])
-    ->name('verify.email.notice');
-Route::post('/email/verification-resend', [RegisterController::class, 'resendVerification'])
-    ->name('verification.resend');
 
+Route::get('/login/verify/complete', [LoginController::class, 'completeVerification'])->name('login.verify.complete');
+
+Route::get('/verify-login', [LoginController::class, 'verifyLogin'])->name('verify.login');
+Route::get('/verify-email/{token}', [RegisterController::class, 'verifyEmail'])->name('verify.email');
+
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/dashboard', function() {
     return redirect()->route('admin.dashboard');
@@ -103,11 +104,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/calendar', [AdminCalendarController::class, 'index'])->name('calendar');
 
+    Route::get('/calendar/events', [AdminCalendarController::class, 'getEvents']) ->name('calendar.events');
+
     Route::get('/score', [AdminScoreController::class, 'score'])->name('score');
 
     Route::get('/result', [AdminResultController::class, 'result'])->name('result');
 
-    Route::get('/report', [AdminReportController::class, 'report'])->name('report');
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports'); // Changed from 'report' to 'reports'
+    Route::get('/admin/report/export', [AdminReportController::class, 'exportReport'])->name('admin.report.export');
+
+    
+    Route::post('/reports/export', [AdminReportController::class, 'exportReport'])->name('reports.export');
 
     Route::get('/profile', [AdminOrganizerController::class, 'profile'])->name('profile');
 });
@@ -162,13 +169,14 @@ Route::prefix('organizer')->name('organizer.')->group(function () {
 
     Route::get('/calendar', [OrganizerCalendarController::class, 'index'])->name('calendar');
 
+    Route::get('/calendar/events', [OrganizerCalendarController::class, 'getEvents']) ->name('calendar.events');
+
     Route::get('/score', [OrganizerScoreController::class, 'score'])->name('score');
 
     Route::get('/result', [OrganizerResultController::class, 'result'])->name('result');
     
-    Route::get('/report', [OrganizerReportController::class, 'report'])->name('report');
-});
 
+});
 
 
 // Judge Routes
@@ -183,14 +191,18 @@ Route::prefix('judge')->name('judge.')->group(function () {
     // Make tabulation accessible directly as well
     Route::get('/tabulation', [JudgeTabulationController::class, 'index'])->name('tabulation');
 
-    // Calendar Route
-    Route::get('/calendar', [JudgeCalendarController::class, 'index'])->name('calendar');
+     // Calendar route
+     Route::get('/calendar', [JudgeCalendarController::class, 'index'])
+     ->name('calendar');
+ 
+    // Calendar events API route
+    Route::get('/calendar/events', [JudgeCalendarController::class, 'getEvents'])
+        ->name('calendar.events');
 
     // Score Route
     Route::get('/score', [JudgeScoreController::class, 'score'])->name('score');
 
     // Result Route
     Route::get('/result', [JudgeResultController::class, 'result'])->name('result');
-    
- 
+
 });

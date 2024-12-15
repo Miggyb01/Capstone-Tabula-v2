@@ -1,108 +1,97 @@
+{{-- result.blade.php --}}
 @extends('firebase.layouts.admin-app')
 
 @section('content')
 <div class="container-fluid p-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold fs-4 mb-0">Competition Results</h3>
-        <div class="btn-group">
-            <button class="btn btn-primary">
-                <i class="ri-file-excel-line me-2"></i>Export
-            </button>
-            <button class="btn btn-secondary">
-                <i class="ri-printer-line me-2"></i>Print
-            </button>
-        </div>
-    </div>
-
-    <!-- Event Filter -->
     <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="fw-bold">Event Results</h2>
+        </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="row mb-3">
+        <!-- Event Filter -->
+        <div class="col-md-3">
+            <form action="{{ route('admin.result') }}" method="GET">
+                <select name="event_filter" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {{ request('event_filter') == 'all' ? 'selected' : '' }}>All Events</option>
+                    @foreach($events as $eventId => $event)
+                        <option value="{{ $event['ename'] }}" {{ request('event_filter') == $event['ename'] ? 'selected' : '' }}>
+                            {{ $event['ename'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+
+        <!-- Top N Filter -->
+        <div class="col-md-2">
+            <form action="{{ route('admin.result') }}" method="GET">
+                <input type="hidden" name="event_filter" value="{{ request('event_filter') }}">
+                <select name="top_filter" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Rankings</option>
+                    <option value="top3" {{ request('top_filter') == 'top3' ? 'selected' : '' }}>Top 3</option>
+                    <option value="top5" {{ request('top_filter') == 'top5' ? 'selected' : '' }}>Top 5</option>
+                    <option value="top10" {{ request('top_filter') == 'top10' ? 'selected' : '' }}>Top 10</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Search -->
         <div class="col-md-4">
-            <select class="form-select">
-                <option value="">Select Event</option>
-                @foreach($events ?? [] as $event)
-                    <option value="{{ $event['id'] }}">{{ $event['ename'] }}</option>
-                @endforeach
-            </select>
+            <form action="{{ route('admin.result') }}" method="GET">
+                <input type="hidden" name="event_filter" value="{{ request('event_filter') }}">
+                <input type="hidden" name="top_filter" value="{{ request('top_filter') }}">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search contestant..." 
+                           value="{{ request('search') }}">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="ri-search-line"></i> Search
+                    </button>
+                    @if(request('search'))
+                        <a href="{{ route('admin.result', array_merge(['event_filter' => request('event_filter')], request()->except('search'))) }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="ri-close-line"></i> Clear
+                        </a>
+                    @endif
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Winner Podium -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row text-center">
-                <!-- Second Place -->
-                <div class="col-md-4">
-                    <div class="position-relative mb-3">
-                        <div class="border rounded-circle overflow-hidden mx-auto" style="width: 150px; height: 150px; background: #f8f9fa;">
-                            <i class="ri-user-line" style="font-size: 80px; line-height: 150px;"></i>
-                        </div>
-                        <span class="position-absolute top-0 end-0 translate-middle badge bg-secondary">2nd</span>
-                    </div>
-                    <h4>Contestant 2</h4>
-                    <h5 class="text-muted">89.5</h5>
-                </div>
-                <!-- First Place -->
-                <div class="col-md-4">
-                    <div class="position-relative mb-3">
-                        <div class="border rounded-circle overflow-hidden mx-auto" style="width: 180px; height: 180px; background: #f8f9fa;">
-                            <i class="ri-user-line" style="font-size: 100px; line-height: 180px;"></i>
-                        </div>
-                        <span class="position-absolute top-0 end-0 translate-middle badge bg-warning">1st</span>
-                    </div>
-                    <h3>Contestant 1</h3>
-                    <h4 class="text-muted">92.8</h4>
-                </div>
-                <!-- Third Place -->
-                <div class="col-md-4">
-                    <div class="position-relative mb-3">
-                        <div class="border rounded-circle overflow-hidden mx-auto" style="width: 150px; height: 150px; background: #f8f9fa;">
-                            <i class="ri-user-line" style="font-size: 80px; line-height: 150px;"></i>
-                        </div>
-                        <span class="position-absolute top-0 end-0 translate-middle badge" style="background-color: #CD7F32;">3rd</span>
-                    </div>
-                    <h4>Contestant 3</h4>
-                    <h5 class="text-muted">87.3</h5>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Full Rankings -->
-    <div class="card">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Complete Rankings</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Contestant</th>
-                            <th>Total Score</th>
-                            <th>Production</th>
-                            <th>Talent</th>
-                            <th>Q&A</th>
-                            <th>Final Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for($i = 1; $i <= 10; $i++)
-                        <tr>
-                            <td>{{$i}}</td>
-                            <td>Contestant {{$i}}</td>
-                            <td>{{ 93 - $i }}</td>
-                            <td>{{ 90 - ($i-1) }}</td>
-                            <td>{{ 88 - ($i-2) }}</td>
-                            <td>{{ 89 - ($i-1) }}</td>
-                            <td class="fw-bold">{{ 90 - ($i-1) }}</td>
-                        </tr>
-                        @endfor
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Results Table -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Event Name</th>
+                    <th>Contestant Name</th>
+                    <th>Total Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($rankings as $index => $ranking)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $ranking['event_name'] }}</td>
+                        <td>{{ $ranking['contestant_name'] }}</td>
+                        <td>{{ number_format($ranking['total_score'], 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            @if(request('search'))
+                                No results found for "{{ request('search') }}"
+                            @else
+                                No results available
+                            @endif
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 @endsection

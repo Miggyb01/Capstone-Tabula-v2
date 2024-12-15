@@ -5,30 +5,42 @@ namespace App\Http\Controllers\Firebase\Organizer;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
-
-use function PHPUnit\Framework\returnValueMap;
+use Illuminate\Support\Facades\Session;
 
 class OrganizerEventController extends Controller
 {
-    protected $database, $tablename;
+    protected $database;
+    
     public function __construct(Database $database)
     {
-        $this->database = $database; 
-        $this->tablename = 'events';
+        $this->database = $database;
     }
+
+    protected function getOrganizerBasePath()
+    {
+        $organizerId = Session::get('user.id');
+        return "user_organizer/{$organizerId}/user_data";
+    }
+
     public function dashboard()
     {
-        $total_events = $this->database->getReference('events')->getSnapshot()->numChildren();
-        $total_contestants = $this->database->getReference('contestants')->getSnapshot()->numChildren();
-        $total_judges = $this->database->getReference('judges')->getSnapshot()->numChildren();
+        $organizerPath = $this->getOrganizerBasePath();
+        
+        // Count only this organizer's data
+        $total_events = $this->database->getReference("{$organizerPath}/events")->getSnapshot()->numChildren();
+        $total_contestants = $this->database->getReference("{$organizerPath}/contestants")->getSnapshot()->numChildren();
+        $total_judges = $this->database->getReference("{$organizerPath}/judges")->getSnapshot()->numChildren();
 
         return view('firebase.organizer.organizerdashboard', compact('total_events', 'total_contestants', 'total_judges'));
     }
+
     public function list()
     {   
         $request = request();
-        $query = $this->database->getReference($this->tablename);
-        $events = $query->getValue() ?? [];
+        $organizerPath = $this->getOrganizerBasePath();
+        
+        // Get events only for this organizer
+        $events = $this->database->getReference("{$organizerPath}/events")->getValue() ?? [];
     
         // Convert to collection for easier manipulation
         $events = collect($events)->map(function($item, $key) {
@@ -51,19 +63,29 @@ class OrganizerEventController extends Controller
             $events = $events->sortBy('id');
         }
     
-        return view('firebase.organizer.event.event-list', compact('events'));
+        return view('firebase.organizer.event.organizer-event-list', compact('events'));
     }
 
     public function create()
     {
-        return view('firebase.organizer.event.event-setup');
+        return view('firebase.organizer.event.organizer-event-setup');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'Event_name' => 'required|string|max:99',
+            'Event_type' => 'required|string',
+            'Event_description' => 'required|string',
+            'Event_venue' => 'required|string',
+            'Event_organizer' => 'required|string',
+            'Event_date' => 'required|date',
+            'Event_start' => 'required',
+            'Event_end' => 'required',
         ]);
+
+        $organizerPath = $this->getOrganizerBasePath();
+        
         $postData = [
             'ename' => $request->Event_name,
             'etype' => $request->Event_type,
@@ -74,80 +96,101 @@ class OrganizerEventController extends Controller
             'edate' => $request->Event_date,
             'estart' => $request->Event_start,
             'eend' => $request->Event_end,
+            'created_at' => ['.sv' => 'timestamp'],
+            'organizer_id' => Session::get('user.id'),
         ];
-        $postRef = $this->database->getReference($this->tablename)->push($postData);
-        if($postRef)
-        {
-            return redirect('organizer/event/list')->with('success','Event Added Successfully ');
+
+        // Store in organizer's specific events folder
+        $postRef = $this->database->getReference("{$organizerPath}/events")->push($postData);
+
+        // Also store in main events collection for admin access
+        if ($postRef) {
+            $eventId = $postRef->getKey();
+            $this->database->getReference("events/{$eventId}")->set(array_merge(
+                $postData,
+                ['organizer_reference' => "{$organizerPath}/events/{$eventId}"]
+            ));
         }
-        else
-        {
-            return redirect('organizer/event/list')->with('error','Event Not added');
-        }
-    }
-    public function update(Request $request, $id)
-    {
-       $request->validate([
-           'Event_name' => 'required|string|max:99',
-           'Event_type' => 'required|string',
-           'Event_description' => 'required|string', 
-           'Event_venue' => 'required|string',
-           'Event_organizer' => 'required|string',
-           'Event_date' => 'required|date',
-           'Event_start' => 'required',
-           'Event_end' => 'required',
-       ]);
-    
-       $postData = [
-           'ename' => $request->Event_name,
-           'etype' => $request->Event_type,
-           'ebanner' => $request->Event_banner,
-           'edescription' => $request->Event_description,
-           'evenue' => $request->Event_venue, 
-           'eorganizer' => $request->Event_organizer,
-           'edate' => $request->Event_date,
-           'estart' => $request->Event_start,
-           'eend' => $request->Event_end,
-       ];
-    
-       $updateRef = $this->database->getReference($this->tablename . '/' . $id)->update($postData);
-    
-       if ($updateRef) {
-           return redirect()->route('organizer.event.list')->with('success', 'Event updated successfully');
-       } else {
-           return redirect()->route('organizer.event.list')->with('error', 'Event update failed');
-       }
+
+        return $postRef 
+            ? redirect()->route('organizer.event.list')->with('success', 'Event Added Successfully')
+            : redirect()->route('organizer.event.list')->with('error', 'Event Not Added');
     }
 
     public function edit($id)
     {
-        $key = $id;
-        $editdata = $this->database->getReference($this->tablename)->getChild($key)->getValue();
+        $organizerPath = $this->getOrganizerBasePath();
+        $editdata = $this->database->getReference("{$organizerPath}/events/{$id}")->getValue();
         
         if ($editdata) {
-            return view('firebase.organizer.event.event-edit', compact('editdata', 'key'));
-        } else {
-            return redirect()->route('organizer.event.list')->with('status', 'Event not found');
+            return view('firebase.organizer.event.organizer-event-edit', [
+                'editdata' => $editdata,
+                'key' => $id
+            ]);
         }
+        
+        return redirect()->route('organizer.event.list')
+            ->with('error', 'Event not found');
     }
 
-   
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'Event_name' => 'required|string|max:99',
+            'Event_type' => 'required|string',
+            'Event_description' => 'required|string',
+            'Event_venue' => 'required|string',
+            'Event_organizer' => 'required|string',
+            'Event_date' => 'required|date',
+            'Event_start' => 'required',
+            'Event_end' => 'required',
+        ]);
 
-   public function destroy($id)
-   {
-        $key = $id;
-        $del_data = $this->database->getReference($this->tablename. '/' .$key)->remove();
-        if($del_data)
-        {
-            return redirect('event-list')->with('status','Event Deleted Successfully');
-        }    
-        else
-        {
-            return redirect('event-list')->with('status','Event Not Deleted');
+        $organizerPath = $this->getOrganizerBasePath();
+        
+        $updateData = [
+            'ename' => $request->Event_name,
+            'etype' => $request->Event_type,
+            'ebanner' => $request->Event_banner,
+            'edescription' => $request->Event_description,
+            'evenue' => $request->Event_venue,
+            'eorganizer' => $request->Event_organizer,
+            'edate' => $request->Event_date,
+            'estart' => $request->Event_start,
+            'eend' => $request->Event_end,
+            'updated_at' => ['.sv' => 'timestamp']
+        ];
+
+        // Update in organizer's folder
+        $organizerUpdate = $this->database->getReference("{$organizerPath}/events/{$id}")
+            ->update($updateData);
+
+        // Update in main events collection
+        if ($organizerUpdate) {
+            $this->database->getReference("events/{$id}")
+                ->update($updateData);
         }
-   }
 
+        return $organizerUpdate
+            ? redirect()->route('organizer.event.list')->with('success', 'Event updated successfully')
+            : redirect()->route('organizer.event.list')->with('error', 'Event update failed');
+    }
 
-   
+    public function destroy($id)
+    {
+        $organizerPath = $this->getOrganizerBasePath();
+        
+        // Delete from organizer's folder
+        $deleteFromOrganizer = $this->database->getReference("{$organizerPath}/events/{$id}")
+            ->remove();
+
+        // Delete from main events collection
+        if ($deleteFromOrganizer) {
+            $this->database->getReference("events/{$id}")->remove();
+        }
+
+        return $deleteFromOrganizer
+            ? redirect()->route('organizer.event.list')->with('success', 'Event deleted successfully')
+            : redirect()->route('organizer.event.list')->with('error', 'Failed to delete event');
+    }
 }
-

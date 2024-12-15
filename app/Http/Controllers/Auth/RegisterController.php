@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Auth;
 use Kreait\Firebase\Contract\Database;
-use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
@@ -23,97 +22,134 @@ class RegisterController extends Controller
     {
         return view('auth.register');
     }
-
     public function register(Request $request)
     {
-        // Add debugging
-        Log::info('Registration attempt:', $request->except(['password', 'password_confirmation']));
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'username' => 'required|string',
+            'email' => 'required|string|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
         try {
-            // Validate the request
-            $validated = $request->validate([
-                'full_name' => 'required|string|max:255',
-                'username' => 'required|string',
-                'email' => 'required|email',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
+            // Check for existing email in Firebase Auth
+            try {
+                $existingUser = $this->auth->getUserByEmail($request->email);
+                if ($existingUser) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['email' => 'Email already registered.']);
+                }
+            } catch (\Kreait\Firebase\Exception\Auth\UserNotFound $e) {
+                // Email doesn't exist, which is what we want
+            }
 
-            // Step 1: Create user in Firebase Authentication
+            // Check for existing username by checking user_info in each organizer record
+            $existingUsers = $this->database->getReference('user_organizer')->getValue();
+            $usernameExists = false;
+            
+            if ($existingUsers) {
+                foreach ($existingUsers as $user) {
+                    if (isset($user['user_info']['username']) && 
+                        strtolower($user['user_info']['username']) === strtolower($request->username)) {
+                        $usernameExists = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($usernameExists) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['username' => 'This username is already taken.']);
+            }
+
+            // Create user in Firebase Authentication
             $userProperties = [
-                'email' => $validated['email'],
+                'email' => $request->email,
                 'emailVerified' => false,
-                'password' => $validated['password'],
-                'displayName' => $validated['full_name'],
+                'password' => $request->password,
+                'displayName' => $request->full_name,
             ];
 
-            Log::info('Creating user in Firebase Auth');
             $createdUser = $this->auth->createUser($userProperties);
-            Log::info('User created in Firebase Auth', ['uid' => $createdUser->uid]);
 
-            // Step 2: Store additional user data in Realtime Database
+            // Prepare organizer data structure with user_info subfolder
             $organizerData = [
-                'full_name' => $validated['full_name'],
-                'username' => $validated['username'],
-                'email' => $validated['email'],
-                'role' => 'organizer',
-                'status' => 'pending',
-                'created_at' => ['.sv' => 'timestamp'],
-                'uid' => $createdUser->uid
-            ];
-
-            Log::info('Storing user data in Realtime Database');
-            $this->database->getReference('organizers/' . $createdUser->uid)
-                          ->set($organizerData);
-
-            // Step 3: Generate verification email
-            Log::info('Generating verification email');
-            $verificationLink = $this->auth->getEmailVerificationLink($validated['email']);
-
-            // Step 4: Store data in session and redirect
-            session([
-                'registration_pending' => [
-                    'email' => $validated['email'],
+                'user_info' => [
+                    'full_name' => $request->full_name,
+                    'username' => $request->username,
+                    'email' => $request->email,
+                    'role' => 'organizer',
+                    'status' => 'pending',
+                    'created_at' => ['.sv' => 'timestamp'],
                     'uid' => $createdUser->uid
                 ]
-            ]);
+            ];
 
-            Log::info('Registration successful, redirecting to verification notice');
-            return redirect()->route('verify.email.notice');
+            // Store data in database under user_organizer/{uid}
+            $databaseResponse = $this->database
+                ->getReference('user_organizer')
+                ->getChild($createdUser->uid)
+                ->set($organizerData);
+
+            if ($databaseResponse === null) {
+                // Database write failed, cleanup the created auth user
+                $this->auth->deleteUser($createdUser->uid);
+                throw new \Exception('Failed to create user profile. Please try again.');
+            }
+
+            // Send verification email
+            $this->auth->sendEmailVerificationLink($request->email);
+
+            return redirect()->route('login')
+                ->with('success', 'Registration successful! Please check your email for verification.');
 
         } catch (\Exception $e) {
-            Log::error('Registration failed:', ['error' => $e->getMessage()]);
-            
+            // If we created a user but something else failed, clean up
+            if (isset($createdUser)) {
+                try {
+                    $this->auth->deleteUser($createdUser->uid);
+                } catch (\Exception $deleteException) {
+                    \Log::error('Failed to delete user after registration error', [
+                        'error' => $deleteException->getMessage()
+                    ]);
+                }
+            }
+
             return back()
-                ->withInput($request->except(['password', 'password_confirmation']))
+                ->withInput()
                 ->withErrors(['error' => 'Registration failed: ' . $e->getMessage()]);
         }
     }
 
-    public function showVerificationNotice()
-    {
-        if (!session('registration_pending')) {
-            return redirect()->route('register')
-                ->withErrors(['error' => 'No pending registration found.']);
-        }
-
-        $email = session('registration_pending.email');
-        return view('auth.verify-email', compact('email'));
-    }
-
-    public function resendVerification()
+    public function verifyEmail($token)
     {
         try {
-            $registrationData = session('registration_pending');
-            
-            if (!$registrationData) {
-                throw new \Exception('No pending registration found.');
+            // Verify the token and get user info
+            $verificationResult = $this->auth->verifyEmailVerificationToken($token);
+            $uid = $verificationResult->data()['sub'];
+
+            // Update user status in database under user_info
+            $updateResult = $this->database
+                ->getReference('user_organizer')
+                ->getChild($uid)
+                ->getChild('user_info')
+                ->update([
+                    'status' => 'active',
+                    'email_verified_at' => ['.sv' => 'timestamp']
+                ]);
+
+            if ($updateResult === null) {
+                throw new \Exception('Failed to update user status.');
             }
 
-            $verificationLink = $this->auth->getEmailVerificationLink($registrationData['email']);
-            
-            return back()->with('success', 'Verification email has been resent.');
+            return redirect()->route('login')
+                ->with('success', 'Email verified successfully! You can now log in.');
+
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return redirect()->route('login')
+                ->with('error', 'Email verification failed: ' . $e->getMessage());
         }
     }
 }

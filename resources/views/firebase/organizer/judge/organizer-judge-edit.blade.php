@@ -1,12 +1,11 @@
-
-@extends('firebase.organizer-app')
+@extends('firebase.layouts.organizer-app')
 
 @section('content')
 <div class="contestant-setup-form-container">
     <div class="event-setup-form-header justify-content-center">
         <div class="event-icon-container align-items-center">
             <i class="ri-group-line"></i>
-            <span>Judge Edit</span>
+            <span>OrganizerJudge Edit</span>
         </div>
     </div>
 
@@ -16,7 +15,7 @@
     </div>
     @endif
 
-    <form action="{{ url('update-judge/'.$key) }}" method="POST">
+    <form action="{{ route('organizer.judge.update', $id) }}" method="POST">
         @csrf
         @method('PUT')
         
@@ -26,10 +25,10 @@
                 <select name="event_name" id="event" class="form-control" required>
                     <option value="" disabled>Events</option>
                     @foreach($events as $eventId => $event)
-                    <option value="{{ $eventId }}" 
-                        {{ isset($editdata['event_name']) && $editdata['event_name'] == $eventId ? 'selected' : '' }}>
-                        {{ $event['ename'] }}
-                    </option>
+                        <option value="{{ $event['ename'] }}" 
+                            {{ $editdata['event_name'] == $event['ename'] ? 'selected' : '' }}>
+                            {{ $event['ename'] }}
+                        </option>
                     @endforeach
                 </select>
             </div>  
@@ -75,11 +74,9 @@
 
         <!-- Buttons -->
         <div class="form-group text-center mt-4">
-            <form action="{{ url(route('judge-list')) }}" method="get">
-                <button type="submit" class="btn-cancel">Cancel</button>
-            </form>
-            <button type="submit" class="btn-add ">Update</button>
-            <form action="{{ url('reset-judge-password/'.$key) }}" method="GET" style="display: inline;">
+            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('organizer.judge.list') }}'">Cancel</button>
+            <button type="submit" class="btn-add">Update</button>
+            <form action="{{ route('organizer.judge.reset-password', $id) }}" method="GET" style="display: inline;">
                 <button type="submit" class="btn-update" onclick="return confirm('Are you sure you want to reset this judge\'s password?')">
                     Reset Password
                 </button>

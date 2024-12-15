@@ -8,10 +8,26 @@
     </a>
 </div>
 
-<!-- Search and Sort Controls -->
+<!-- Search and Filter Controls -->
 <div class="row mb-3 px-4">
+    <div class="col-md-3">
+        <form action="{{ route('admin.event.list') }}" method="GET" class="d-flex">
+            <select name="organizer_filter" class="form-select" onchange="this.form.submit()">
+                <option value="all" {{ request('organizer_filter') == 'all' ? 'selected' : '' }}>All Organizers</option>
+                <option value="admin" {{ request('organizer_filter') == 'admin' ? 'selected' : '' }}>Admin</option>
+                @foreach($organizers as $organizerId => $organizerName)
+                    @if($organizerId !== 'admin')
+                        <option value="{{ $organizerId }}" {{ request('organizer_filter') == $organizerId ? 'selected' : '' }}>
+                            {{ $organizerName }}
+                        </option>
+                    @endif
+                @endforeach
+            </select>
+        </form>
+    </div>
     <div class="col-md-6">
         <form action="{{ route('admin.event.list') }}" method="GET" class="d-flex">
+            <input type="hidden" name="organizer_filter" value="{{ request('organizer_filter') }}">
             <div class="input-group">
                 <input type="text" name="search" class="form-control" placeholder="Search event name..." 
                        value="{{ request('search') }}">
@@ -19,40 +35,29 @@
                     <i class="ri-search-line"></i> Search
                 </button>
                 @if(request('search'))
-                    <a href="{{ route('admin.event.list') }}" class="btn btn-outline-primary">
+                    <a href="{{ route('admin.event.list', ['organizer_filter' => request('organizer_filter')]) }}" class="btn btn-outline-primary">
                         <i class="ri-close-line"></i> Clear
                     </a>
                 @endif
             </div>
         </form>
     </div>
-    <div class="col-md-6 text-end">
-    <div class="btn-group-eventSort">
-        <a href="{{ route('admin.event.list', array_merge(['sort' => 'newest'], request()->except('sort'))) }}" 
-           class="btn btn-outline-primary btn-sm {{ request('sort', 'newest') === 'newest' ? 'active' : '' }}">
-            Newest First
-        </a>
-        <a href="{{ route('admin.event.list', array_merge(['sort' => 'oldest'], request()->except('sort'))) }}" 
-           class="btn btn-outline-primary btn-sm {{ request('sort') === 'oldest' ? 'active' : '' }}">
-            Oldest First
-        </a>
+    <div class="col-md-3 text-end">
+        <div class="btn-group">
+            <a href="{{ route('admin.event.list', array_merge(['sort' => 'newest', 'organizer_filter' => request('organizer_filter')], request()->except('sort'))) }}" 
+               class="btn btn-outline-primary btn-sm {{ request('sort', 'newest') === 'newest' ? 'active' : '' }}">
+                Newest First
+            </a>
+            <a href="{{ route('admin.event.list', array_merge(['sort' => 'oldest', 'organizer_filter' => request('organizer_filter')], request()->except('sort'))) }}" 
+               class="btn btn-outline-primary btn-sm {{ request('sort') === 'oldest' ? 'active' : '' }}">
+                Oldest First
+            </a>
+        </div>
     </div>
 </div>
-</div>
 
-<!-- Results count -->
-@if(request('search'))
-<div class="px-4 mb-3">
-    <small class="text-muted">
-        Found {{ $events->count() }} result(s) for "{{ request('search') }}"
-    </small>
-</div>
-@endif
-
-<div class="table-row mt-3">
-    <div class="col-12">
+        <!-- Update the table to show organizer information -->
         <table class="table table-sm table-hover">
-            <!-- Your existing table headers -->
             <thead class="table-light">
                 <tr class="highlightr text-center">
                     <th scope="row">#</th>
@@ -66,7 +71,7 @@
                 </tr>
             </thead>
             <tbody class="table-group-divider text-center">
-            @php $i = 1; @endphp
+                @php $i = 1; @endphp
                 @forelse ($events as $key => $item)
                 <tr>
                     <td>{{ $i++ }}</td>
@@ -82,9 +87,9 @@
                         @endif
                     </td>
                     <td>{{ $item['evenue'] ?? 'N/A' }}</td>
-                    <td>{{ $item['eorganizer'] ?? 'N/A' }}</td>
+                    <td>{{ $item['organizer_name'] ?? 'N/A' }}</td>
                     <td>
-                        <div class="btn-group" role="group">
+                       <div class="btn-group" role="group">
                             <a href="{{ route('admin.event.edit', $item['id']) }}" class="btn btn-primary btn-sm me-2">
                                 <i class="ri-edit-box-line"></i> Edit
                             </a>

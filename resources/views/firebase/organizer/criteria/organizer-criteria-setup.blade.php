@@ -1,16 +1,15 @@
-@extends('firebase.organizer-app')
+@extends('firebase.layouts.organizer-app')
 
 @section('content')
-
 <div class="p-5">
     <div class="event-setup-form-header justify-content-center">
         <div class="event-icon-container align-items-center">
             <i class="ri-group-line"></i>
-            <span>Criteria Setup</span>
+            <span>Organizer Criteria Setup</span>
         </div>
     </div>
 
-    <form action="{{ route('criteria-list') }}" method="POST" id="criteriaForm">
+    <form action="{{ route('organizer.criteria.store') }}" method="POST" id="criteriaForm">
         @csrf
 
         <!-- Event Selection -->
@@ -29,63 +28,63 @@
                 </select>
 
         <!-- Initial Default Category Form Structure -->
-<div id="categories-container">
-    <div class="category-group mb-3 mt-3">
-        <!-- Default Category Input -->
-        <div class="row">
-            <div class="col">
-                <label for="category" class="form-label mt-1 ms-2">Category <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" name="category_name[]" placeholder="Category" required>
-
-                <label for="criteria_details" class="form-label mt-3 ms-2">Criteria Details <span class="text-danger">*</span></label>
-                <textarea class="form-control" name="criteria_details[]" placeholder="Details" rows="2" required></textarea>
-            </div>
-            <div class="col-auto">
-                <button type="button" class="btn btn-primary add-category-btn">+</button>
-            </div>
-        </div>
-
-        <!-- Default Main and Sub Criteria -->
-        <div class="row mb-2 mt-3">
-            <!-- Default Main Criteria -->
-            <div class="main-criteria-group col-6">
+        <div id="categories-container">
+            <div class="category-group mb-3 mt-3">
+                <!-- Default Category Input -->
                 <div class="row">
                     <div class="col">
-                        <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="main_criteria[0][]" placeholder="Main-Criteria" required>
-                    </div>
-                    <div class="col">
-                        <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" name="main_criteria_percentage[0][]" placeholder="Percentage" required>
+                        <label for="category" class="form-label mt-1 ms-2">Category <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="category_name[]" placeholder="Category" required>
+
+                        <label for="criteria_details" class="form-label mt-3 ms-2">Criteria Details <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="criteria_details[]" placeholder="Details" rows="2" required></textarea>
                     </div>
                     <div class="col-auto">
-                        <button type="button" class="btn btn-primary add-main-criteria-btn" data-category-index="0">+</button>
+                        <button type="button" class="btn btn-primary add-category-btn">+</button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Default Sub Criteria -->
-            <div class="sub-criteria-container col-6" data-category-index="0" data-main-criteria-index="0">
-                <div class="row sub-criteria-row">
-                    <div class="col">
-                        <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="sub_criteria[0][0][]" placeholder="Sub-Criteria" required>
+                <!-- Default Main and Sub Criteria -->
+                <div class="row mb-2 mt-3">
+                    <!-- Default Main Criteria -->
+                    <div class="main-criteria-group col-6">
+                        <div class="row">
+                            <div class="col">
+                                <label class="form-label">Main Criteria <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="main_criteria[0][]" placeholder="Main-Criteria" required>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Percentage <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="main_criteria_percentage[0][]" placeholder="Percentage" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-primary add-main-criteria-btn" data-category-index="0">+</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col">
-                        <label class="form-label">Percentage <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" name="sub_criteria_percentage[0][0][]" placeholder="Percentage" required>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
+
+                    <!-- Default Sub Criteria -->
+                    <div class="sub-criteria-container col-6" data-category-index="0" data-main-criteria-index="0">
+                        <div class="row sub-criteria-row">
+                            <div class="col">
+                                <label class="form-label">Sub-Criteria <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="sub_criteria[0][0][]" placeholder="Sub-Criteria" required>
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Percentage <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="sub_criteria_percentage[0][0][]" placeholder="Percentage" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-primary add-sub-criteria-btn">+</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
- <!-- Form Buttons -->
- <div class="form-group text-center">
-            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('/admin-dashboard') }}'">Cancel</button>
+        <!-- Form Buttons -->
+        <div class="form-group text-center">
+            <button type="button" class="btn-cancel" onclick="window.location.href='{{ route('organizer.dashboard') }}'">Cancel</button>
             <button type="submit" class="btn-add">Add</button>
         </div>
     </form>

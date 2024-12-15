@@ -150,44 +150,119 @@
         }
     }
 
+    .alert {
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+    }
+
+    .alert-success {
+        color: #0f5132;
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+    }
+
+    .alert-danger {
+        color: #842029;
+        background-color: #f8d7da;
+        border-color: #f5c2c7;
+    }
+
+    .alert-warning {
+        color: #664d03;
+        background-color: #fff3cd;
+        border-color: #ffecb5;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: -20px;
+        margin-bottom: 15px;
+        display: block;
+    }
+
     </style>
 <body>
     <div class="signup_form">
         <img class="home-logo" src="{{ asset('tabulaLOGO.png') }}" alt="Tabula Logo">
         <h3>Sign up</h3>
         
+        
+        <!-- Success Message -->
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <!-- Error Message -->
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <!-- Validation Errors -->
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        
         <form action="{{ route('register') }}" method="POST">
             @csrf
             
-            
             <div class="input_box">
-                <input type="text" name="full_name" placeholder="Full Name" required value="{{ old('full_name') }}" />
+                <input type="text" 
+                       name="full_name" 
+                       placeholder="Full Name" 
+                       required 
+                       value="{{ old('full_name') }}" />
                 @error('full_name')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
 
-                <input type="text" name="username" placeholder="User Name" required value="{{ old('username') }}" />
+                <input type="text" 
+                       name="username" 
+                       placeholder="User Name" 
+                       required 
+                       value="{{ old('username') }}" />
                 @error('username')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
 
-                <input type="password" name="password" placeholder="Password" required />
+                <input type="password" 
+                       name="password" 
+                       placeholder="Password" 
+                       required />
                 @error('password')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
 
-                <!-- Add password confirmation field -->
-                <input type="password" name="password_confirmation" placeholder="Confirm Password" required />
+                <input type="password" 
+                       name="password_confirmation" 
+                       placeholder="Confirm Password" 
+                       required />
                 @error('password_confirmation')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
             </div>
             
-            <p class="options">Please enter your email address to receive a verification code.</p>
+            <p class="options">Please enter your email address to receive a verification.</p>
             
             <div class="input_box">
                 <div class="input-wrapper">
-                    <input type="email" name="email" placeholder="Email Address" required value="{{ old('email') }}" />
+                    <input type="email" 
+                           name="email" 
+                           placeholder="Email Address" 
+                           required 
+                           value="{{ old('email') }}" />
                     <i class="ri-google-fill"></i>
                 </div>
                 @error('email')

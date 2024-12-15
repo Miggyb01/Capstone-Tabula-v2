@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Firebase\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Database;
+use Kreait\Firebase\Contract\Auth;
+use Illuminate\Support\Facades\Session;
 
 use function PHPUnit\Framework\returnValueMap;
 
@@ -21,19 +23,56 @@ class AdminEventController extends Controller
         $total_events = $this->database->getReference('events')->getSnapshot()->numChildren();
         $total_contestants = $this->database->getReference('contestants')->getSnapshot()->numChildren();
         $total_judges = $this->database->getReference('judges')->getSnapshot()->numChildren();
-
+        
         return view('firebase.admin.admindashboard', compact('total_events', 'total_contestants', 'total_judges'));
     }
+    
+
     public function list()
     {   
         $request = request();
-        $query = $this->database->getReference($this->tablename);
-        $events = $query->getValue() ?? [];
+        
+        // Get events
+        $events = $this->database->getReference($this->tablename)->getValue() ?? [];
+        
+        // Get all organizers from user_organizer node
+        $organizerUsers = $this->database->getReference('user_organizer')->getValue() ?? [];
+        
+        // Create organizers array for dropdown
+        $organizers = ['admin' => 'Admin']; // Start with admin
+        foreach ($organizerUsers as $userId => $userData) {
+            if (isset($userData['user_info']['full_name'])) {
+                $organizers[$userId] = $userData['user_info']['full_name'];
+            }
+        }
     
-        // Convert to collection for easier manipulation
-        $events = collect($events)->map(function($item, $key) {
-            return array_merge(['id' => $key], $item);
+        // Convert events to collection and add organizer information
+        $events = collect($events)->map(function($item, $key) use ($organizerUsers) {
+            $organizerName = 'Admin'; // Default value
+            
+            // If event has organizer_id, look up the organizer's name
+            if (isset($item['organizer_id'])) {
+                if (isset($organizerUsers[$item['organizer_id']]['user_info']['full_name'])) {
+                    $organizerName = $organizerUsers[$item['organizer_id']]['user_info']['full_name'];
+                }
+            }
+    
+            return array_merge(
+                ['id' => $key],
+                $item,
+                ['organizer_name' => $organizerName]
+            );
         });
+    
+        // Filter by organizer if specified
+        if ($request->has('organizer_filter') && $request->organizer_filter !== 'all') {
+            $events = $events->filter(function($item) use ($request) {
+                if ($request->organizer_filter === 'admin') {
+                    return !isset($item['organizer_id']);
+                }
+                return isset($item['organizer_id']) && $item['organizer_id'] === $request->organizer_filter;
+            });
+        }
     
         // Search functionality
         if ($request->has('search')) {
@@ -51,14 +90,14 @@ class AdminEventController extends Controller
             $events = $events->sortBy('id');
         }
     
-        return view('firebase.admin.event.event-list', compact('events'));
+        return view('firebase.admin.event.event-list', compact('events', 'organizers'));
     }
 
     public function create()
     {
         return view('firebase.admin.event.event-setup');
     }
-
+    
     public function store(Request $request)
     {
         $request->validate([

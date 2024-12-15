@@ -25,30 +25,27 @@ class AdminContestantController extends Controller
 
     public function list(Request $request)
     {
-        // Get all events first
+        // Get all events
         $events = $this->database->getReference('events')->getValue() ?? [];
         
-        // Create a map of event IDs to event names for easier lookup
-        $eventMap = [];
-        foreach ($events as $eventId => $event) {
-            if (isset($event['ename'])) {
-                $eventMap[$event['ename']] = $event['ename'];
-            }
-        }
-
         // Get all contestants
         $contestants = $this->database->getReference($this->tablename)->getValue() ?? [];
         
-        // Convert to collection for easier manipulation and add event names
-        $contestants = collect($contestants)->map(function($item, $key) use ($eventMap) {
+        // Convert to collection for easier manipulation
+        $contestants = collect($contestants)->map(function($item, $key) use ($events) {
             $contestant = array_merge(['id' => $key], $item);
             
-            // Ensure event name is set
-            if (isset($contestant['ename']) && isset($eventMap[$contestant['ename']])) {
-                $contestant['event_name'] = $eventMap[$contestant['ename']];
-            } else {
-                $contestant['event_name'] = 'No Event Assigned';
+            // Find event name from events reference
+            $eventName = 'No Event Assigned';
+            if (isset($contestant['ename'])) {
+                foreach ($events as $event) {
+                    if (isset($event['ename']) && $event['ename'] === $contestant['ename']) {
+                        $eventName = $event['ename'];
+                        break;
+                    }
+                }
             }
+            $contestant['event_name'] = $eventName;
             
             return $contestant;
         });
@@ -56,7 +53,7 @@ class AdminContestantController extends Controller
         // Filter by selected event if specified
         if ($request->has('event_filter') && $request->event_filter !== 'all') {
             $contestants = $contestants->filter(function($contestant) use ($request) {
-                return isset($contestant['ename']) && $contestant['ename'] === $request->event_filter;
+                return $contestant['event_name'] === $request->event_filter;
             });
         }
 
@@ -83,6 +80,10 @@ class AdminContestantController extends Controller
 
         return view('firebase.admin.contestant.contestant-list', compact('contestants', 'events'));
     }
+
+
+    
+    
     public function store(Request $request)
     {
         $postData = [
@@ -105,10 +106,13 @@ class AdminContestantController extends Controller
     {
         $key = $id;
         $editdata = $this->database->getReference($this->tablename)->getChild($key)->getValue();
-
-        if ($editdata) { // Remove the event_name check since we're using ename
+    
+        if ($editdata) {
             // Fetch all events
             $events = $this->database->getReference('events')->getValue();
+            
+            // Store the current event name from editdata
+            $editdata['event_name'] = $editdata['ename'] ?? null;
             
             return view('firebase.admin.contestant.contestant-edit', compact('editdata', 'key', 'events'));
         } else {
@@ -116,11 +120,12 @@ class AdminContestantController extends Controller
                             ->with('status', 'Contestant not found');
         }
     }
+
     public function update(Request $request, $id)
     {
         $key = $id;
         $updateData = [
-            'event_name' => $request->event_name,
+            'ename' => $request->event_name,  // Store as ename
             'cfname' => $request->Contestant_firstname,
             'cmname' => $request->Contestant_middlename,
             'clname' => $request->Contestant_lastname,

@@ -9,7 +9,7 @@
             <h3 class="fw-bold fs-4 mb-1">Oraganizer Dashboard</h3>
             <div class="row">
             <div class="col-12 col-md-4">
-                    <a href="event-list" class="text-decoration-none">
+                    <a href="{{ route('organizer.event.list') }}"  class="text-decoration-none">
                         <div class="card border-0">
                             <div class="card-body py-4">
                                 <div class="icon-container mt-2">
@@ -22,7 +22,7 @@
                     </a>
                 </div>
                 <div class="col-12 col-md-4">
-                    <a href="judge-list" class="text-decoration-none">
+                    <a href="{{ route('organizer.judge.list') }}" class="text-decoration-none">
                         <div class="card border-0">
                             <div class="card-body py-4">   
                                 <div class="icon-container mt-2">
@@ -37,7 +37,7 @@
                     </a>
                 </div>
                 <div class="col-12 col-md-4">
-                    <a href="contestant-list" class="text-decoration-none">
+                    <a  href="{{ route('organizer.contestant.list') }}"   class="text-decoration-none">
                         <div class="card border-0">
                             <div class="card-body py-4">
                                 <div class="icon-container mt-2">

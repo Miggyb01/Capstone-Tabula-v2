@@ -159,7 +159,7 @@
         <div class="login_form">
             <img class="home-logo" src="{{ asset('tabulaLOGO.png') }}" alt="Tabula Logo">
             <h3>Sign-In</h3>
-
+            
             @if(session('error'))
                 <div class="alert alert-danger">
                     {{ session('error') }}
@@ -169,6 +169,14 @@
             @if(session('success'))
                 <div class="alert alert-success">
                     {{ session('success') }}
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    @foreach($errors->all() as $error)
+                        {{ $error }}<br>
+                    @endforeach
                 </div>
             @endif
 
@@ -208,11 +216,5 @@
         </div>
     </form>
 
-    @if(config('app.debug'))
-        <div style="position: fixed; bottom: 0; right: 0; background: #f8f9fa; padding: 10px; border: 1px solid #ddd;">
-            <small>Debug Info:</small><br>
-            <small>Session: {{ json_encode(session()->all()) }}</small>
-        </div>
-    @endif
 </body>
 </html>

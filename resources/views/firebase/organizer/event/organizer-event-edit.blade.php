@@ -1,4 +1,5 @@
-@extends('firebase.organizer-app')
+
+@extends('firebase.layouts.organizer-app')
 
 @section('content')
 
@@ -7,13 +8,19 @@
         <div class="event-setup-form-header  justify-content-center">
             <div class="event-icon-container  align-items-center">
                 <i class="ri-calendar-todo-fill "></i>
-                <span>Edit Event</span>
+                <span>OrganizerEdit Event</span>
             </div>
         </div>
 
-        <form action="{{ url('update-event/'.$key) }}" method="POST">
+        @if(session('status'))
+    <div class="alert alert-success">
+        {!! session('status') !!}
+    </div>
+    @endif
+        <form action="{{ route('organizer.event.update', $key) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
+            
             
             <!-- First row -->
             <div class="event-form-row row  ">
@@ -21,9 +28,23 @@
                     <label for="eventName" class="form-label mt-1 ms-2">Events Name</label>
                     <input type="text" class="form-control " name="Event_name" id="eventName" value="{{$editdata['ename']}}">
                 </div>
+                <!-- In event-edit.blade.php, replace the Event Type input -->
                 <div class="col">
-                    <label for="eventType" class="form-label ">Event Type</label>
-                    <input type="text" class="form-control " name="Event_type" id="eventType" value="{{$editdata['etype']}}">
+                    <label for="eventType" class="form-label">Event Type</label>
+                    <select class="form-control" id="eventTypeSelect" onchange="checkEventType(this.value)">
+                        <option value="" disabled>Select Event Type</option>
+                        <option value="Beauty Pageants" {{ $editdata['etype'] === 'Beauty Pageants' ? 'selected' : '' }}>Beauty Pageants</option>
+                        <option value="Talent Shows" {{ $editdata['etype'] === 'Talent Shows' ? 'selected' : '' }}>Talent Shows</option>
+                        <option value="Singing Competitions" {{ $editdata['etype'] === 'Singing Competitions' ? 'selected' : '' }}>Singing Competitions</option>
+                        <option value="Dance Competitions" {{ $editdata['etype'] === 'Dance Competitions' ? 'selected' : '' }}>Dance Competitions</option>
+                        <option value="Sports Events" {{ $editdata['etype'] === 'Sports Events' ? 'selected' : '' }}>Sports Events</option>
+                        <option value="custom" {{ !in_array($editdata['etype'], ['Beauty Pageants', 'Talent Shows', 'Singing Competitions', 'Dance Competitions', 'Sports Events']) ? 'selected' : '' }}>Other (Specify)</option>
+                    </select>
+                    
+                    <!-- Hidden input for custom event type -->
+                    <input type="text" class="form-control mt-2" name="Event_type" id="customEventType" 
+                        value="{{ $editdata['etype'] }}" 
+                        style="display: {{ !in_array($editdata['etype'], ['Beauty Pageants', 'Talent Shows', 'Singing Competitions', 'Dance Competitions', 'Sports Events']) ? 'block' : 'none' }};">
                 </div>
                 <div class="col">
                     <label for="chooseBanner" class="form-label">Choose Banner</label>
@@ -66,11 +87,30 @@
             </div>
 
             <!-- Buttons -->
-            <div class="form-group text-center ">
-                <button type="button" class="btn-cancel mr-2" onclick="window.location.href='{{ route('event-list') }}'">Cancel</but>
+            <div class="form-group text-center">
+                <button type="button" class="btn-cancel mr-2" onclick="window.location.href='{{ route('organizer.event.list') }}'">Cancel</button>
                 <button type="submit" class="btn-add">Update</button>
-              </div>
+            </div>
         </form>
     </div>
 
+<script>
+    function checkEventType(value) {
+        const customInput = document.getElementById('customEventType');
+        if (value === 'custom') {
+            customInput.style.display = 'block';
+            customInput.required = true;
+        } else {
+            customInput.style.display = 'none';
+            customInput.required = false;
+            customInput.value = value;
+        }
+    }
+
+    // Initialize the form on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectElement = document.getElementById('eventTypeSelect');
+        checkEventType(selectElement.value);
+    });
+</script>
 @endsection

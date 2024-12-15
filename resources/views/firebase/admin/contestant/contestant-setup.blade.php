@@ -1,6 +1,13 @@
 @extends('firebase.layouts.admin-app')
 
 @section('content')
+
+@if(session('success'))
+<div class="alert alert-success px-4">
+    {!! session('success') !!}
+</div>
+@endif
+
 <div class="contestant-setup-form-container">
     <div class="event-setup-form-header  justify-content-center">
         <div class="event-icon-container  align-items-center">

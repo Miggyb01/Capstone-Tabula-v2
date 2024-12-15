@@ -1,15 +1,77 @@
-@extends('firebase.organizer-app')
+@extends('firebase.layouts.organizer-app')
 
 @section('content')
 <div class="d-flex justify-content-between mb-3">
     <h3 class="fw-bold fs-4 mb-1 mt-4 ms-4">Judge List</h3> 
-    <a href="{{ url('judge-setup') }}" class="add-criteria-setup-btn btn btn-primary">
+    <a href="{{ route('organizer.judge.setup') }}" class="add-criteria-setup-btn btn btn-primary">
         <i class="ri-add-circle-line"></i> Add Judge
     </a>
 </div>
 
+@if(session('status'))
+    <div class="alert alert-success">
+        {!! session('status') !!}
+    </div>
+@endif
+
+<!-- Filter and Search Controls -->
+<div class="row mb-3 px-4">
+    <div class="col-md-3">
+        <form action="{{ route('organizer.judge.list') }}" method="GET" class="d-flex">
+            <select name="event_filter" class="form-select" onchange="this.form.submit()">
+                <option value="all" {{ request('event_filter') == 'all' ? 'selected' : '' }}>All Events</option>
+                @foreach($events as $eventId => $event)
+                    @if(isset($event['ename']))
+                        <option value="{{ $event['ename'] }}" {{ request('event_filter') == $event['ename'] ? 'selected' : '' }}>
+                            {{ $event['ename'] }}
+                        </option>
+                    @endif
+                @endforeach
+            </select>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <form action="{{ route('organizer.judge.list') }}" method="GET" class="d-flex">
+            <input type="hidden" name="event_filter" value="{{ request('event_filter') }}">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search judge name or username..." 
+                       value="{{ request('search') }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="ri-search-line"></i> Search
+                </button>
+                @if(request('search'))
+                    <a href="{{ route('organizer.judge.list', ['event_filter' => request('event_filter')]) }}" class="btn btn-outline-primary">
+                        <i class="ri-close-line"></i> Clear
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+    <div class="col-md-3 text-end">
+        <div class="btn-group">
+            <a href="{{ route('organizer.judge.list', array_merge(['sort' => 'newest', 'event_filter' => request('event_filter')], request()->except('sort'))) }}" 
+               class="btn btn-outline-primary btn-sm {{ request('sort', 'newest') === 'newest' ? 'active' : '' }}">
+                Newest First
+            </a>
+            <a href="{{ route('organizer.judge.list', array_merge(['sort' => 'oldest', 'event_filter' => request('event_filter')], request()->except('sort'))) }}" 
+               class="btn btn-outline-primary btn-sm {{ request('sort') === 'oldest' ? 'active' : '' }}">
+                Oldest First
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Results count -->
+@if(request('search'))
+<div class="px-4 mb-3">
+    <small class="text-muted">
+        Found {{ $judges->count() }} result(s) for "{{ request('search') }}"
+    </small>
+</div>
+@endif
+
 @if(session('success'))
-<div class="alert alert-success">
+<div class="alert alert-success px-4">
     {!! session('success') !!}
 </div>
 @endif
@@ -30,31 +92,60 @@
             </thead>
             <tbody class="table-group-divider text-center">
                 @php $i = 1; @endphp
-                @forelse ($judges as $key => $item)
+                @forelse ($judges as $judge)
                 <tr>
                     <td>{{ $i++ }}</td>
-                    <td>{{ $item['jfname'] }} {{ $item['jmname'] }} {{ $item['jlname'] }}</td>
-                    <td>{{ $item['jusername'] }}</td>
+                    <td>{{ $judge['jfname'] }} {{ $judge['jmname'] }} {{ $judge['jlname'] }}</td>
+                    <td>{{ $judge['jusername'] }}</td>
                     <td>••••••••</td>
-                    <td>{{ isset($item['event_name']) ? $item['event_name'] : 'N/A' }}</td>
-                    <td>{{ isset($item['status']) ? $item['status'] : 'Active' }}</td>
+                    <td>{{ $judge['event_display'] }}</td>
+                    <td>{{ $judge['status'] ?? 'Active' }}</td>
                     <td>
-                        <a href="{{ url('edit-judge/' . $key) }}" class="btn btn-primary btn-sm">
-                            <i class="ri-edit-box-line"></i> Edit
-                        </a>
-                        <a href="{{ url('delete-judge/' . $key) }}" class="btn btn-danger btn-sm" 
-                           onclick="return confirm('Are you sure you want to delete this judge?')">
-                            <i class="ri-delete-bin-line"></i> Delete
-                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="{{ route('organizer.judge.edit', $judge['id']) }}" class="btn btn-primary btn-sm me-2">
+                                <i class="ri-edit-box-line"></i> Edit
+                            </a>
+                            <a href="{{ route('organizer.judge.delete', $judge['id']) }}" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Are you sure you want to delete this judge?')">
+                                <i class="ri-delete-bin-line"></i> Delete
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7">No Record Found</td>
+                    <td colspan="7" class="text-center">
+                        @if(request('search'))
+                            No judges found matching "{{ request('search') }}"
+                        @else
+                            No judges found
+                        @endif
+                    </td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+
+<style>
+.table th {
+    background-color: #f8f9fa;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-group {
+    display: flex;
+    justify-content: center;
+}
+
+.input-group {
+    max-width: 100%;
+}
+</style>
 @endsection

@@ -153,8 +153,19 @@ class AdminJudgeController extends Controller
         $key = $id;
         $editdata = $this->database->getReference($this->tablename)->getChild($key)->getValue();
         if ($editdata) {
+            // Get all events
             $events = $this->database->getReference('events')->getValue();
-            $editdata['event_name'] = $editdata['event_id'] ?? $editdata['event_name'] ?? '';
+            
+            // Find the current event name if it exists
+            if (isset($editdata['event_name'])) {
+                foreach ($events as $eventId => $event) {
+                    if ($eventId === $editdata['event_name']) {
+                        $editdata['event_name'] = $event['ename'];
+                        break;
+                    }
+                }
+            }
+    
             return view('firebase.admin.judge.judge-edit', compact('editdata', 'key', 'events'));
         } else {
             return redirect()->route('admin.judge.list')->with('status', 'Judge not found');
@@ -163,9 +174,23 @@ class AdminJudgeController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Find the event ID based on the selected event name
+        $events = $this->database->getReference('events')->getValue();
+        $eventName = null;
+        
+        foreach ($events as $eventId => $event) {
+            if ($eventId === $request->event_name) {
+                $eventName = $event['ename'];
+                break;
+            }
+        }
+    
+        if (!$eventName) {
+            return redirect()->back()->with('error', 'Invalid event selection');
+        }
+    
         $updateData = [
-            'event_name' => $request->event_name,
-            'event_id' => $request->event_name,
+            'event_name' => $eventName, // Store the event name instead of ID
             'jfname' => $request->Judge_firstname,
             'jmname' => $request->Judge_middlename,
             'jlname' => $request->Judge_lastname,
@@ -175,6 +200,7 @@ class AdminJudgeController extends Controller
         ];
     
         $res_update = $this->database->getReference($this->tablename . '/' . $id)->update($updateData);
+        
         return $res_update 
             ? redirect()->route('admin.judge.list')->with('status', 'Judge Updated Successfully')
             : redirect()->route('admin.judge.list')->with('status', 'Judge Not Updated');
